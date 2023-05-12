@@ -1,54 +1,54 @@
-import * as apigw from "@aws-cdk/aws-apigatewayv2-alpha";
-import * as integrations from "@aws-cdk/aws-apigatewayv2-integrations-alpha";
-import * as cdk from "aws-cdk-lib";
-import * as acm from "aws-cdk-lib/aws-certificatemanager";
-import * as lambda from "aws-cdk-lib/aws-lambda";
-import * as route53 from "aws-cdk-lib/aws-route53";
-import * as targets from "aws-cdk-lib/aws-route53-targets";
-import { Construct } from "constructs";
+import * as apigw from '@aws-cdk/aws-apigatewayv2-alpha'
+import * as integrations from '@aws-cdk/aws-apigatewayv2-integrations-alpha'
+import * as cdk from 'aws-cdk-lib'
+import * as acm from 'aws-cdk-lib/aws-certificatemanager'
+import * as lambda from 'aws-cdk-lib/aws-lambda'
+import * as route53 from 'aws-cdk-lib/aws-route53'
+import * as targets from 'aws-cdk-lib/aws-route53-targets'
+import { Construct } from 'constructs'
 
 type RouteHandler = {
-  routePath: string;
-  handler: lambda.IFunction;
-};
+  routePath: string
+  handler: lambda.IFunction
+}
 
 interface ApiProps {
-  domain: string;
-  subdomain: string;
-  routeHandlers: RouteHandler[];
+  domain: string
+  subdomain: string
+  routeHandlers: RouteHandler[]
 }
 
 export default class Api extends Construct {
-  public readonly url: string;
+  public readonly url: string
 
   constructor(scope: Construct, id: string, props: ApiProps) {
-    super(scope, id);
+    super(scope, id)
 
-    const { domain, subdomain = "api" } = props;
+    const { domain, subdomain = 'api' } = props
 
-    const zone = route53.HostedZone.fromLookup(this, "Zone", {
+    const zone = route53.HostedZone.fromLookup(this, 'Zone', {
       domainName: domain,
-    });
+    })
 
-    const domainName = subdomain + "." + domain;
+    const domainName = subdomain + '.' + domain
 
     // TLS certificate
-    const certificate = new acm.Certificate(this, "Certificate", {
+    const certificate = new acm.Certificate(this, 'Certificate', {
       domainName: domainName,
       validation: acm.CertificateValidation.fromDns(zone),
-    });
+    })
 
-    new cdk.CfnOutput(this, "CertificateArn", {
+    new cdk.CfnOutput(this, 'CertificateArn', {
       value: certificate.certificateArn,
-    });
+    })
 
-    const customDomain = new apigw.DomainName(this, "CustomDomain", {
+    const customDomain = new apigw.DomainName(this, 'CustomDomain', {
       domainName: domainName,
       certificate,
-    });
+    })
 
     // Route53 alias record
-    new route53.ARecord(this, "ARecord", {
+    new route53.ARecord(this, 'ARecord', {
       recordName: domainName,
       target: route53.RecordTarget.fromAlias(
         new targets.ApiGatewayv2DomainProperties(
@@ -57,16 +57,16 @@ export default class Api extends Construct {
         )
       ),
       zone,
-    });
+    })
 
-    const httpApi = new apigw.HttpApi(this, "HttpApi", {
+    const httpApi = new apigw.HttpApi(this, 'HttpApi', {
       corsPreflight: {
-        allowOrigins: ["http://localhost:3000"],
+        allowOrigins: ['http://localhost:3000'],
         allowHeaders: [
-          "Content-Type",
-          "X-Amz-Date",
-          "Authorization",
-          "X-Api-Key",
+          'Content-Type',
+          'X-Amz-Date',
+          'Authorization',
+          'X-Api-Key',
         ],
         allowMethods: [
           apigw.CorsHttpMethod.OPTIONS,
@@ -82,7 +82,7 @@ export default class Api extends Construct {
         domainName: customDomain,
       },
       disableExecuteApiEndpoint: true,
-    });
+    })
 
     const methods = [
       apigw.HttpMethod.OPTIONS,
@@ -91,26 +91,26 @@ export default class Api extends Construct {
       apigw.HttpMethod.PUT,
       apigw.HttpMethod.PATCH,
       apigw.HttpMethod.DELETE,
-    ];
+    ]
 
     props.routeHandlers.forEach(({ routePath, handler }) => {
       const integration = new integrations.HttpLambdaIntegration(
-        "Integration",
+        'Integration',
         handler
-      );
-      httpApi.addRoutes({ path: routePath, methods, integration });
+      )
+      httpApi.addRoutes({ path: routePath, methods, integration })
       httpApi.addRoutes({
         path: `${routePath}/{proxy+}`,
         methods,
         integration,
-      });
-    });
+      })
+    })
 
-    this.url = "https://" + domainName;
+    this.url = 'https://' + domainName
 
-    new cdk.CfnOutput(this, "apiendpoint", {
+    new cdk.CfnOutput(this, 'apiendpoint', {
       value: this.url,
-      description: "HTTP API Endpoint",
-    });
+      description: 'HTTP API Endpoint',
+    })
   }
 }
