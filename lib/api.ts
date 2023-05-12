@@ -107,5 +107,10 @@ export default class Api extends Construct {
     });
 
     this.url = "https://" + domainName;
+
+    new cdk.CfnOutput(this, "apiendpoint", {
+      value: this.url,
+      description: "HTTP API Endpoint",
+    });
   }
 }
