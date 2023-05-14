@@ -81,7 +81,7 @@ export default abstract class BaseDAO<
     try {
       const input: PutCommandInput = {
         TableName: this.tableName,
-        Item: { ...item, creationTime: moment().utcOffset(8).format() },
+        Item: { ...item, createdAt: moment().utcOffset(8).format() },
       }
       const data = await ddbDocClient.send(new PutCommand(input))
       console.log('Success - item added:', data)
@@ -97,7 +97,7 @@ export default abstract class BaseDAO<
     try {
       const input: PutCommandInput = {
         TableName: this.tableName,
-        Item: { ...item, creationTime: moment().utcOffset(8).format() },
+        Item: { ...item, updatedAt: moment().utcOffset(8).format() },
       }
       const data = await ddbDocClient.send(new PutCommand(input))
       console.log('Success - item updated:', data)
