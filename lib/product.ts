@@ -9,6 +9,8 @@ import { join } from 'path'
 const functionDir = join(__dirname, '..', 'function')
 const functionName = 'product'
 
+const vtlDir = join(__dirname, '..', 'api', 'vtl')
+
 type ProductProps = {
   api: appsync.IGraphqlApi
 }
@@ -87,6 +89,15 @@ export default class Product extends Construct {
       requestMappingTemplate: appsync.MappingTemplate.dynamoDbPutItem(
         appsync.PrimaryKey.partition('id').auto(),
         appsync.Values.projecting('input')
+      ),
+      responseMappingTemplate: appsync.MappingTemplate.dynamoDbResultItem(),
+    })
+
+    dynamoDbDataSource.createResolver('UpdateProductResolver', {
+      typeName: 'Mutation',
+      fieldName: 'updateProduct',
+      requestMappingTemplate: appsync.MappingTemplate.fromFile(
+        join(vtlDir, 'updateProduct.vm')
       ),
       responseMappingTemplate: appsync.MappingTemplate.dynamoDbResultItem(),
     })
