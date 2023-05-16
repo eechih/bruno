@@ -1,4 +1,5 @@
 import * as cdk from 'aws-cdk-lib'
+import * as appsync from 'aws-cdk-lib/aws-appsync'
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 import * as lambda from 'aws-cdk-lib/aws-lambda'
 import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs'
@@ -8,12 +9,17 @@ import { join } from 'path'
 const functionDir = join(__dirname, '..', 'function')
 const functionName = 'product'
 
+type ProductProps = {
+  api: appsync.IGraphqlApi
+}
+
 export default class Product extends Construct {
   public readonly table: dynamodb.Table
   public readonly handler: lambda.IFunction
 
-  constructor(scope: Construct, id: string) {
+  constructor(scope: Construct, id: string, props: ProductProps) {
     super(scope, id)
+    const { api } = props
 
     this.table = new dynamodb.Table(this, 'Table', {
       partitionKey: {
@@ -52,5 +58,47 @@ export default class Product extends Construct {
 
     // 👇 grant some permissions for the lambda role
     this.table.grantReadWriteData(this.handler)
+
+    const dynamoDbDataSource = api.addDynamoDbDataSource(
+      'ProductDataSource',
+      this.table
+    )
+
+    dynamoDbDataSource.createResolver('GetProductResolver', {
+      typeName: 'Query',
+      fieldName: 'getProduct',
+      requestMappingTemplate: appsync.MappingTemplate.dynamoDbGetItem(
+        'id',
+        'id'
+      ),
+      responseMappingTemplate: appsync.MappingTemplate.dynamoDbResultItem(),
+    })
+
+    dynamoDbDataSource.createResolver('ListProductResolver', {
+      typeName: 'Query',
+      fieldName: 'listProducts',
+      requestMappingTemplate: appsync.MappingTemplate.dynamoDbScanTable(),
+      responseMappingTemplate: appsync.MappingTemplate.dynamoDbResultList(),
+    })
+
+    dynamoDbDataSource.createResolver('CreateProductResolver', {
+      typeName: 'Mutation',
+      fieldName: 'createProduct',
+      requestMappingTemplate: appsync.MappingTemplate.dynamoDbPutItem(
+        appsync.PrimaryKey.partition('id').auto(),
+        appsync.Values.projecting('input')
+      ),
+      responseMappingTemplate: appsync.MappingTemplate.dynamoDbResultItem(),
+    })
+
+    dynamoDbDataSource.createResolver('DeleteProductResolver', {
+      typeName: 'Mutation',
+      fieldName: 'deleteProduct',
+      requestMappingTemplate: appsync.MappingTemplate.dynamoDbDeleteItem(
+        'id',
+        'input.id'
+      ),
+      responseMappingTemplate: appsync.MappingTemplate.dynamoDbResultItem(),
+    })
   }
 }

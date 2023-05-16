@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib'
 import 'source-map-support/register'
-import { BrunoApiStack } from '../lib/bruno-api-stack'
 import { BrunoStack } from '../lib/bruno-stack'
 
 const app = new cdk.App()
-new BrunoStack(app, 'BrunoStack', {
+new BrunoStack(app, 'Bruno', {
   /* If you don't specify 'env', this stack will be environment-agnostic.
    * Account/Region-dependent features and context lookups will not work,
    * but a single synthesized template can be deployed anywhere. */
@@ -22,5 +21,3 @@ new BrunoStack(app, 'BrunoStack', {
   env: { account: '089370838833', region: 'us-east-1' },
   domain: 'dev3.creditgodbackend.com.tw',
 })
-
-new BrunoApiStack(app, 'BrunoApiStack', {})

@@ -1,34 +1,123 @@
-type Note {
-  id: ID!
-  name: String!
-  completed: Boolean!
-}
-
-input NoteInput {
-  id: ID!
-  name: String!
-  completed: Boolean!
-}
-
-input UpdateNoteInput {
-  id: ID!
-  name: String
-  completed: Boolean
-}
-
 type Query {
-  getNoteById(noteId: String!): Note
-  listNotes: [Note]
+  getProduct(id: ID!): Product
+  listProducts(
+    filter: FilterProductInput
+    limit: Int
+    nextToken: String
+  ): [Product]
 }
 
 type Mutation {
-  createNote(note: NoteInput!): Note
-  updateNote(note: UpdateNoteInput!): Note
-  deleteNote(noteId: String!): String
+  createProduct(input: CreateProductInput!): Product
+  deleteProduct(input: DeleteProductInput!): Product
 }
 
-type Subscription {
-  onCreateNote: Note @aws_subscribe(mutations: ["createNote"])
-  onDeleteNote: String @aws_subscribe(mutations: ["deleteNote"])
-  onUpdateNote: Note @aws_subscribe(mutations: ["updateNote"])
+type Product {
+  id: ID!
+  name: String
+  description: String
+  price: Int
+  cost: Int
+  optionGrid: [String]
+  images: [String]
+  provider: String
+  offShelfAt: AWSDateTime
+  publishAt: AWSDateTime
+  createdAt: AWSDateTime
+  updatedAt: AWSDateTime
+  owner: String
+}
+
+type ProductConnection {
+  items: [Product]
+  nextToken: String
+}
+
+input CreateProductInput {
+  name: String!
+  description: String
+  price: Int!
+  cost: Int
+  optionGrid: [String]
+  images: [String]
+  provider: String
+  offShelfAt: AWSDateTime
+  publishAt: AWSDateTime
+}
+
+input UpdateProductInput {
+  id: ID!
+  name: String
+  description: String
+  price: Int
+  cost: Int
+  optionGrid: [String]
+  images: [String]
+  provider: String
+  offShelfAt: AWSDateTime
+  publishAt: AWSDateTime
+}
+
+input DeleteProductInput {
+  id: ID!
+}
+
+input FilterProductInput {
+  id: TableIDFilterInput
+  name: TableStringFilterInput
+}
+
+input TableBooleanFilterInput {
+  ne: Boolean
+  eq: Boolean
+}
+
+input TableFloatFilterInput {
+  ne: Float
+  eq: Float
+  le: Float
+  lt: Float
+  ge: Float
+  gt: Float
+  contains: Float
+  notContains: Float
+  between: [Float]
+}
+
+input TableIDFilterInput {
+  ne: ID
+  eq: ID
+  le: ID
+  lt: ID
+  ge: ID
+  gt: ID
+  contains: ID
+  notContains: ID
+  between: [ID]
+  beginsWith: ID
+}
+
+input TableIntFilterInput {
+  ne: Int
+  eq: Int
+  le: Int
+  lt: Int
+  ge: Int
+  gt: Int
+  contains: Int
+  notContains: Int
+  between: [Int]
+}
+
+input TableStringFilterInput {
+  ne: String
+  eq: String
+  le: String
+  lt: String
+  ge: String
+  gt: String
+  contains: String
+  notContains: String
+  between: [String]
+  beginsWith: String
 }
