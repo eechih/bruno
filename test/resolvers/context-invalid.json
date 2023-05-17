@@ -1,0 +1,19 @@
+{
+  "arguments": {
+    "firstname": "Shaggy",
+    "age": 4
+  },
+  "source": {},
+  "result": {
+    "breed": "Miniature Schnauzer",
+    "color": "black_grey"
+  },
+  "identity": {
+    "sub": "uuid",
+    "issuer": " https://cognito-idp.{region}.amazonaws.com/{userPoolId}",
+    "username": "Invalid Username",
+    "claims": {},
+    "sourceIp": ["x.x.x.x"],
+    "defaultAuthStrategy": "ALLOW"
+  }
+}

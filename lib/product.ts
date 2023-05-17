@@ -9,7 +9,7 @@ import { join } from 'path'
 const functionDir = join(__dirname, '..', 'function')
 const functionName = 'product'
 
-const vtlDir = join(__dirname, '..', 'api', 'vtl')
+const resolvers = join(__dirname, '..', 'api', 'resolvers')
 
 type ProductProps = {
   api: appsync.IGraphqlApi
@@ -97,7 +97,7 @@ export default class Product extends Construct {
       typeName: 'Mutation',
       fieldName: 'updateProduct',
       requestMappingTemplate: appsync.MappingTemplate.fromFile(
-        join(vtlDir, 'updateProduct.vm')
+        join(resolvers, 'Mutation.updateProduct.req.vtl')
       ),
       responseMappingTemplate: appsync.MappingTemplate.dynamoDbResultItem(),
     })
