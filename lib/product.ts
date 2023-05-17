@@ -9,7 +9,7 @@ import { join } from 'path'
 const functionDir = join(__dirname, '..', 'function')
 const functionName = 'product'
 
-const resolvers = join(__dirname, '..', 'api', 'resolvers')
+const resolvers = join(__dirname, '..', 'api', 'graphql', 'resolvers')
 
 type ProductProps = {
   api: appsync.IGraphqlApi
