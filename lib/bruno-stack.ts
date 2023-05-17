@@ -5,6 +5,7 @@ import * as s3 from 'aws-cdk-lib/aws-s3'
 import { Construct } from 'constructs'
 import { join } from 'path'
 import CognitoAuthRole from './cognito-auth-role'
+import CognitoUnuthRole from './cognito-unauth-role'
 import Product from './product'
 
 interface BrunoStackProps extends cdk.StackProps {
@@ -82,10 +83,42 @@ export class BrunoStack extends cdk.Stack {
       value: bucket.bucketName,
     })
 
-    const authRole = new CognitoAuthRole(this, 'AuthRole', {
+    const authenticatedRole = new CognitoAuthRole(this, 'AuthenticatedRole', {
       identityPool,
       bucket,
     })
+
+    const unauthenticatedRole = new CognitoUnuthRole(
+      this,
+      'UnauthenticatedRole',
+      {
+        identityPool,
+      }
+    )
+
+    // refer to https://github.com/bobbyhadz/cdk-identity-pool-example/blob/cdk-v2/lib/cdk-starter-stack.ts
+    new cognito.CfnIdentityPoolRoleAttachment(
+      this,
+      'identity-pool-role-attachment',
+      {
+        identityPoolId: identityPool.ref,
+        roles: {
+          authenticated: authenticatedRole.role.roleArn,
+          unauthenticated: unauthenticatedRole.role.roleArn,
+        },
+        roleMappings: {
+          mapping: {
+            type: 'Token',
+            ambiguousRoleResolution: 'AuthenticatedRole',
+            identityProvider: `cognito-idp.${
+              cdk.Stack.of(this).region
+            }.amazonaws.com/${userPool.userPoolId}:${
+              userPoolClient.userPoolClientId
+            }`,
+          },
+        },
+      }
+    )
 
     // const privatePolicy = new iam.Policy(this, 'PrivatePolicy', {
     //   policyName: 'Private_policy',
