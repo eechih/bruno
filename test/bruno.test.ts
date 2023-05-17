@@ -13,4 +13,7 @@ test('SQS Queue Created', () => {
   //   template.hasResourceProperties('AWS::SQS::Queue', {
   //     VisibilityTimeout: 300
   //   });
+
+  const serialNum = Math.floor(Math.random() * 1000000)
+  console.log('serialNum', serialNum)
 })
