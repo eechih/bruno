@@ -15,7 +15,7 @@ export default class CognitoAuthRole extends Construct {
     const { identityPool, bucket } = props
 
     this.role = new iam.Role(this, 'Role', {
-      roleName: `Bruno-authRole`,
+      // roleName: `Bruno-authRole`,
       assumedBy: new iam.FederatedPrincipal(
         'cognito-identity.amazonaws.com',
         {
