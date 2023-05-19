@@ -12,7 +12,12 @@
     "prettier:fix": "prettier --config .prettierrc --write '**/*.{js,ts}'",
     "lint": "eslint '**/*.{js,ts}'",
     "lint:fix": "npm lint --fix",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "web:dev": "cd web && npm run dev",
+    "web:build": "cd web && npm run build",
+    "web:start": "cd web && npm run start",
+    "web:docker:build": "cd web && npm run docker:build",
+    "web:docker:run": "cd web && npm run docker:run"
   },
   "repository": {
     "type": "git",
