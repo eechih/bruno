@@ -6,24 +6,19 @@ const config = {
   githubUrl: 'https://github.com/gregrickaby/nextjs-app-router-examples',
   nav: [
     {
-      name: 'Home',
+      name: '首頁',
       path: '/',
+      icon: 'HomeIcon',
     },
     {
-      name: 'Weather (Server)',
-      path: '/wx-server/',
-    },
-    {
-      name: 'Weather (Client)',
-      path: '/wx-client/',
-    },
-    {
-      name: 'Blog',
-      path: '/blog/',
+      name: '產品管理',
+      path: '/products',
+      icon: 'TableViewIcon',
     },
     {
       name: 'GitHub',
       path: 'https://github.com/gregrickaby/nextjs-app-router-examples',
+      icon: '',
     },
   ],
 }
