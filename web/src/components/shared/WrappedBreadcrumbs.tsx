@@ -20,7 +20,7 @@ export default function WrappedBreadcrumbs(props: WrappedBreadcrumbsProps) {
       separator={<NavigateNextIcon fontSize="small" />}
       sx={{
         paddingY: theme.spacing(2),
-        [theme.breakpoints.down('md')]: { paddingY: 0 },
+        // [theme.breakpoints.down('md')]: { paddingY: 0 },
       }}
       {...rest}
     >

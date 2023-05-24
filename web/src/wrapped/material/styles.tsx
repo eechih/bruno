@@ -1,5 +1,11 @@
 'use client'
 
-import { styled } from '@mui/material/styles'
+import {
+  ThemeOptions,
+  ThemeProvider,
+  createTheme,
+  styled,
+} from '@mui/material/styles'
 
-export { styled }
+export type { ThemeOptions }
+export { ThemeProvider, createTheme, styled }

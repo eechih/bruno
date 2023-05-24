@@ -1,5 +1,5 @@
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
-import PhotoCamera from '@mui/icons-material/PhotoCamera'
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
@@ -254,7 +254,7 @@ export default function StorageManager(props: StorageManagerProps) {
             color="inherit"
             component="label"
             size="large"
-            startIcon={<PhotoCamera />}
+            startIcon={<PhotoCameraIcon />}
             sx={{
               border: '1px dashed grey',
               borderRadius: 0,

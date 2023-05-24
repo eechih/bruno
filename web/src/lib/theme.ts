@@ -1,6 +1,6 @@
 import { Roboto } from 'next/font/google'
 
-import { createTheme } from '@/wrapped/styles'
+import { ThemeOptions } from '@/wrapped/material/styles'
 
 export const roboto = Roboto({
   weight: ['300', '400', '500', '700'],
@@ -9,22 +9,11 @@ export const roboto = Roboto({
   fallback: ['Helvetica', 'Arial', 'sans-serif'],
 })
 
-// Create a theme instance.
-const theme = createTheme({
+export const defaultTheme: ThemeOptions = {
   palette: {
-    primary: {
-      main: '#556cd6',
-    },
-    secondary: {
-      main: '#19857b',
-    },
-    error: {
-      main: '#19857b',
-    },
+    mode: 'dark',
   },
   typography: {
     fontFamily: roboto.style.fontFamily,
   },
-})
-
-export default theme
+}

@@ -20,7 +20,6 @@ type ProductDataGridProps = {
 }
 
 export default function ProductDataGrid(props: ProductDataGridProps) {
-  console.log('props', props)
   const theme = useTheme()
 
   async function deleteProduct(productId: string) {
@@ -70,7 +69,7 @@ export default function ProductDataGrid(props: ProductDataGridProps) {
           headerName: '名稱',
           flex: 1,
           minWidth: 100,
-          maxWidth: 400,
+          // maxWidth: 400,
           editable: true,
         },
         {

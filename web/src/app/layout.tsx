@@ -1,18 +1,12 @@
 import '@aws-amplify/ui-react/styles.css'
 import { Metadata } from 'next'
-import { Roboto } from 'next/font/google'
 
-import AppDrawer from '@/components/AppDrawer'
+import AppDrawer from '@/components/app-drawer'
+import ThemeProvider from '@/components/theme-provider'
 import config from '@/lib/config'
+import { roboto } from '@/lib/theme'
 import { ReactChildren } from '@/lib/types'
-import './globals.css'
-
-const roboto = Roboto({
-  weight: ['300', '400', '500', '700'],
-  style: ['normal', 'italic'],
-  subsets: ['latin'],
-  display: 'swap',
-})
+// import './globals.css'
 
 export const metadata: Metadata = {
   title: config.siteName,
@@ -23,7 +17,9 @@ export default function RootLayout({ children }: ReactChildren) {
   return (
     <html lang="en">
       <body className={roboto.className}>
-        <AppDrawer>{children}</AppDrawer>
+        <ThemeProvider>
+          <AppDrawer>{children}</AppDrawer>
+        </ThemeProvider>
       </body>
     </html>
   )

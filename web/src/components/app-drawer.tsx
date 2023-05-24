@@ -9,7 +9,6 @@ import TableViewIcon from '@mui/icons-material/TableView'
 import AppBar, { AppBarProps } from '@mui/material/AppBar'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import CssBaseline from '@mui/material/CssBaseline'
 import Divider from '@mui/material/Divider'
 import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
@@ -18,12 +17,14 @@ import ListItem from '@mui/material/ListItem'
 import ListItemButton from '@mui/material/ListItemButton'
 import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
+import Switch from '@mui/material/Switch'
 import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
 import { styled, useTheme } from '@mui/material/styles'
 import NextLink from 'next/link'
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 
+import { IThemeContext, ThemeContext } from '@/components/theme-provider'
 import config from '@/lib/config'
 import { ReactChildren } from '@/lib/types'
 
@@ -84,10 +85,10 @@ const StyledAppBar = styled(AppBar, {
 export default function AppDrawer({ children }: ReactChildren) {
   const [open, setOpen] = useState(false)
   const theme = useTheme()
+  const { mode, setMode } = useContext(ThemeContext) as IThemeContext
 
   return (
     <Box sx={{ display: 'flex' }}>
-      <CssBaseline />
       <StyledAppBar position="fixed" open={open}>
         <Toolbar>
           <IconButton
@@ -102,6 +103,12 @@ export default function AppDrawer({ children }: ReactChildren) {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             {config.siteName}
           </Typography>
+          <Switch
+            color="secondary"
+            onChange={() => {
+              setMode(mode == 'light' ? 'dark' : 'light')
+            }}
+          />
           <Button color="inherit">Login</Button>
         </Toolbar>
       </StyledAppBar>
