@@ -47,12 +47,8 @@ export default function ProductForm({ product }: ProductFormProps) {
   const { isDirty, isValid, dirtyFields, isSubmitting, errors } = formState
 
   useEffect(() => {
-    if (product) {
-      reset(convertToInputs(product))
-    } else {
-      reset(initialInputs)
-    }
-  }, [product, reset])
+    reset(product ? convertToInputs(product) : initialInputs)
+  }, [reset, product])
 
   const onSubmit: SubmitHandler<ProductFormInputs> = async data => {
     console.log('onSubmit', data)
@@ -162,7 +158,7 @@ export default function ProductForm({ product }: ProductFormProps) {
         <Grid xs={12}>
           <Stack spacing={2}>
             <Typography variant="h6">產品圖片</Typography>
-            <ImageFieldArray control={control} />
+            {/* <ImageFieldArray control={control} /> */}
           </Stack>
         </Grid>
 

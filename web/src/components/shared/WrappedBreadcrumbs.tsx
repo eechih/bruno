@@ -1,3 +1,5 @@
+'use client'
+
 import NavigateNextIcon from '@mui/icons-material/NavigateNext'
 import Breadcrumbs, { BreadcrumbsProps } from '@mui/material/Breadcrumbs'
 import Link, { LinkProps } from '@mui/material/Link'

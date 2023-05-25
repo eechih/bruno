@@ -4,11 +4,10 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import awsConfig from '@/aws-exports'
+import WrappedBreadcrumbs from '@/components/shared/WrappedBreadcrumbs'
 import { getAllProducts } from '@/lib/functions'
-import Box from '@/wrapped/material/Box'
 import Button from '@/wrapped/material/Button'
 import Container from '@/wrapped/material/Container'
-import Paper from '@/wrapped/material/Paper'
 import Stack from '@/wrapped/material/Stack'
 import Typography from '@/wrapped/material/Typography'
 import ProductDataGrid from './ProductDataGrid'
@@ -25,7 +24,13 @@ async function Page() {
 
   return (
     <Container disableGutters maxWidth="lg">
-      <Stack direction="column" py={2}>
+      <WrappedBreadcrumbs
+        links={[
+          { children: '首頁', href: '/' },
+          { children: '產品列表', href: '/products' },
+        ]}
+      />
+      <Stack direction="column" pb={2}>
         <Stack
           direction="row"
           justifyContent="space-between"
@@ -49,9 +54,7 @@ async function Page() {
           </Stack>
         </Stack>
       </Stack>
-      <Paper component={Box}>
-        <ProductDataGrid products={products} />
-      </Paper>
+      <ProductDataGrid products={products} />
     </Container>
   )
 }
