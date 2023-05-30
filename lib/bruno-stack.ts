@@ -1,12 +1,12 @@
 import * as cdk from 'aws-cdk-lib'
-import * as appsync from 'aws-cdk-lib/aws-appsync'
 import * as cognito from 'aws-cdk-lib/aws-cognito'
 import * as s3 from 'aws-cdk-lib/aws-s3'
 import { Construct } from 'constructs'
-import { join } from 'path'
+import { createQraphQLAPI } from './appsync'
+import { createProductResolvers } from './appsync-resolvers'
 import CognitoAuthRole from './cognito-auth-role'
 import CognitoUnuthRole from './cognito-unauth-role'
-import Product from './product'
+import { createProductTable } from './dynamodb'
 
 interface BrunoStackProps extends cdk.StackProps {
   readonly domain: string
@@ -120,37 +120,13 @@ export class BrunoStack extends cdk.Stack {
       }
     )
 
-    const api = new appsync.GraphqlApi(this, 'GraphqlApi', {
-      name: 'bruno-api',
-      schema: appsync.SchemaFile.fromAsset(
-        join(__dirname, '..', 'api', 'graphql', 'schema.graphql')
-      ),
-      authorizationConfig: {
-        defaultAuthorization: {
-          authorizationType: appsync.AuthorizationType.API_KEY,
-          apiKeyConfig: {
-            expires: cdk.Expiration.after(cdk.Duration.days(365)),
-          },
-        },
-      },
-      xrayEnabled: true,
-    })
+    const graphqlApi = createQraphQLAPI(this, 'QraphQLAPI')
 
-    // print out the AppSync GraphQL endpoint to the terminal
-    new cdk.CfnOutput(this, 'GraphQLAPIURL', {
-      value: api.graphqlUrl,
-    })
-
-    // print out the AppSync API Key to the terminal
-    new cdk.CfnOutput(this, 'GraphQLAPIKey', {
-      value: api.apiKey || '',
-    })
-
-    // print out the stack region
-    new cdk.CfnOutput(this, 'Stack Region', {
-      value: this.region,
-    })
-
-    const product = new Product(this, 'Product', { api })
+    const productTable = createProductTable(this, 'ProductTable')
+    const productDataSource = graphqlApi.addDynamoDbDataSource(
+      'ProductDataSource',
+      productTable
+    )
+    createProductResolvers(graphqlApi, productDataSource)
   }
 }
