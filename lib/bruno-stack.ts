@@ -2,11 +2,11 @@ import * as cdk from 'aws-cdk-lib'
 import * as cognito from 'aws-cdk-lib/aws-cognito'
 import * as s3 from 'aws-cdk-lib/aws-s3'
 import { Construct } from 'constructs'
-import { createQraphQLAPI } from './appsync'
-import { createProductResolvers } from './appsync-resolvers'
+import AppSync from './appsync'
 import CognitoAuthRole from './cognito-auth-role'
 import CognitoUnuthRole from './cognito-unauth-role'
-import { createProductTable } from './dynamodb'
+import { createGenericDataPointTable, createProductTable } from './dynamodb'
+// import WafConfig from './waf-config'
 
 interface BrunoStackProps extends cdk.StackProps {
   readonly domain: string
@@ -43,13 +43,13 @@ export class BrunoStack extends cdk.Stack {
     })
 
     // Export values
-    new cdk.CfnOutput(this, 'UserPoolId', {
+    new cdk.CfnOutput(this, 'USER_POOL_ID', {
       value: userPool.userPoolId,
     })
-    new cdk.CfnOutput(this, 'UserPoolClientId', {
+    new cdk.CfnOutput(this, 'USER_POOL_WEB_CLIENT_ID', {
       value: userPoolClient.userPoolClientId,
     })
-    new cdk.CfnOutput(this, 'IdentityPoolId', {
+    new cdk.CfnOutput(this, 'IDENTITY_POOL_ID', {
       value: identityPool.ref,
     })
 
@@ -120,13 +120,15 @@ export class BrunoStack extends cdk.Stack {
       }
     )
 
-    const graphqlApi = createQraphQLAPI(this, 'QraphQLAPI')
+    const productTable = createProductTable(this)
+    const dataPointTable = createGenericDataPointTable(this)
 
-    const productTable = createProductTable(this, 'ProductTable')
-    const productDataSource = graphqlApi.addDynamoDbDataSource(
-      'ProductDataSource',
-      productTable
-    )
-    createProductResolvers(graphqlApi, productDataSource)
+    const appsync = new AppSync(this, 'AppSync', {
+      userPool,
+      productTable,
+      dataPointTable,
+    })
+
+    // new WafConfig(this, 'BrunoAPI-waf', { graphqlApi: appsync.graphqlApi })
   }
 }

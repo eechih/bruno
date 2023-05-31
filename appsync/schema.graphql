@@ -1,16 +1,46 @@
-type Query {
-  getProduct(id: ID!): Product
-  listProducts(
-    filter: FilterProductInput
-    limit: Int
-    nextToken: String
-  ): [Product]
-}
-
 type Mutation {
   createProduct(input: CreateProductInput!): Product
   updateProduct(input: UpdateProductInput!): Product
   deleteProduct(input: DeleteProductInput!): Product
+  createDataPoint(input: CreateDataPointInput!): DataPoint
+  updateDataPoint(input: UpdateDataPointInput!): DataPoint
+  deleteDataPoint(input: DeleteDataPointInput!): DataPoint
+}
+
+type Query {
+  getProduct(id: ID!): Product
+  listProducts(
+    filter: TableProductFilterInput
+    limit: Int
+    nextToken: String
+  ): ProductConnection
+  getDataPoint(name: ID!, createdAt: AWSDateTime!): DataPoint
+  listDataPoints(
+    filter: TableDataPointFilterInput
+    limit: Int
+    nextToken: String
+  ): DataPointConnection
+  queryDataPointsByNameAndDateTime(
+    name: ID!
+    createdAt: ModelStringKeyConditionInput
+    sortDirection: ModelSortDirection
+    filter: TableDataPointFilterInput
+    limit: Int
+    nextToken: String
+  ): DataPointConnection
+}
+
+type Subscription {
+  onCreateDataPoint(
+    owner: String!
+    name: ID
+    createdAt: AWSDateTime
+    value: Int
+  ): DataPoint @aws_subscribe(mutations: ["createDataPoint"])
+  onUpdateDataPoint(name: ID, createdAt: AWSDateTime, value: Int): DataPoint
+    @aws_subscribe(mutations: ["updateDataPoint"])
+  onDeleteDataPoint(name: ID, createdAt: AWSDateTime, value: Int): DataPoint
+    @aws_subscribe(mutations: ["deleteDataPoint"])
 }
 
 type Product {
@@ -63,7 +93,7 @@ input DeleteProductInput {
   id: ID!
 }
 
-input FilterProductInput {
+input TableProductFilterInput {
   id: TableIDFilterInput
   name: TableStringFilterInput
 }
@@ -121,4 +151,54 @@ input TableStringFilterInput {
   notContains: String
   between: [String]
   beginsWith: String
+}
+
+type DataPoint {
+  name: ID!
+  owner: String!
+  createdAt: AWSDateTime!
+  value: Int
+}
+
+type DataPointConnection {
+  items: [DataPoint]
+  nextToken: String
+}
+
+input CreateDataPointInput {
+  name: ID!
+  createdAt: AWSDateTime
+  value: Int
+}
+
+input UpdateDataPointInput {
+  name: ID!
+  createdAt: AWSDateTime!
+  value: Int
+}
+
+input DeleteDataPointInput {
+  name: ID!
+  createdAt: AWSDateTime!
+}
+
+enum ModelSortDirection {
+  ASC
+  DESC
+}
+
+input ModelStringKeyConditionInput {
+  eq: String
+  le: String
+  lt: String
+  ge: String
+  gt: String
+  between: [String]
+  beginsWith: String
+}
+
+input TableDataPointFilterInput {
+  name: TableIDFilterInput
+  createdAt: TableStringFilterInput
+  value: TableIntFilterInput
 }
