@@ -2,11 +2,13 @@ import * as cdk from 'aws-cdk-lib'
 import * as appsync from 'aws-cdk-lib/aws-appsync'
 import * as cognito from 'aws-cdk-lib/aws-cognito'
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
+import * as lambda from 'aws-cdk-lib/aws-lambda'
 import { Construct } from 'constructs'
 import { join } from 'path'
 
 const appsyncDir = join(__dirname, '..', 'appsync')
 const resolversDir = join(appsyncDir, 'resolvers')
+const lambdaDir = join(__dirname, '..', 'lambda')
 
 type AppSyncProps = {
   userPool: cognito.IUserPool
@@ -16,6 +18,10 @@ type AppSyncProps = {
 
 export default class AppSync extends Construct {
   public readonly graphqlApi: appsync.GraphqlApi
+
+  private readonly productTable: dynamodb.ITable
+  private readonly dataPointTable: dynamodb.ITable
+
   private readonly noneDataSource: appsync.NoneDataSource
   private readonly productDataSource: appsync.DynamoDbDataSource
   private readonly dataPointDataSource: appsync.DynamoDbDataSource
@@ -23,7 +29,9 @@ export default class AppSync extends Construct {
 
   constructor(scope: Construct, id: string, props: AppSyncProps) {
     super(scope, id)
-    const { userPool, productTable, dataPointTable } = props
+    const { userPool } = props
+    this.productTable = props.productTable
+    this.dataPointTable = props.dataPointTable
 
     // 1. Define AppSync API
     this.graphqlApi = new appsync.GraphqlApi(this, 'QraphQLAPI', {
@@ -31,15 +39,15 @@ export default class AppSync extends Construct {
       schema: appsync.SchemaFile.fromAsset(join(appsyncDir, 'schema.graphql')),
       authorizationConfig: {
         defaultAuthorization: {
-          authorizationType: appsync.AuthorizationType.API_KEY,
-          apiKeyConfig: {
-            expires: cdk.Expiration.after(cdk.Duration.days(365)),
-          },
+          authorizationType: appsync.AuthorizationType.USER_POOL,
+          userPoolConfig: { userPool },
         },
         additionalAuthorizationModes: [
           {
-            authorizationType: appsync.AuthorizationType.USER_POOL,
-            userPoolConfig: { userPool },
+            authorizationType: appsync.AuthorizationType.API_KEY,
+            apiKeyConfig: {
+              expires: cdk.Expiration.after(cdk.Duration.days(365)),
+            },
           },
         ],
       },
@@ -63,11 +71,11 @@ export default class AppSync extends Construct {
     // 3. Set up table as a Datasource and grant access
     this.dataPointDataSource = this.graphqlApi.addDynamoDbDataSource(
       'DataPointDataSource',
-      dataPointTable
+      this.dataPointTable
     )
     this.productDataSource = this.graphqlApi.addDynamoDbDataSource(
       'ProductDataSource',
-      productTable
+      this.productTable
     )
 
     this.pipelineReqResCode = appsync.Code.fromInline(`
@@ -89,6 +97,7 @@ export default class AppSync extends Construct {
     // Queries:
     this._createResolver_Query_getProduct()
     this._createResolver_Query_listProducts()
+    this._createResolver_Query_listDataPoints()
     this._createResolver_Query_queryDataPointsByNameAndDateTime()
     // Subscriptions:
     this._createResolver_Subscription_onCreateDataPoint()
@@ -183,6 +192,28 @@ export default class AppSync extends Construct {
       fieldName: 'listProducts',
       requestMappingTemplate: appsync.MappingTemplate.dynamoDbScanTable(),
       responseMappingTemplate: appsync.MappingTemplate.dynamoDbResultList(),
+    })
+  }
+
+  private _createResolver_Query_listDataPoints() {
+    const queryHandler = new lambda.Function(this, 'QueryDataHandler', {
+      runtime: lambda.Runtime.NODEJS_16_X,
+      code: lambda.Code.fromAsset(join(lambdaDir, 'listDataPoints')),
+      handler: 'index.handler',
+      environment: {
+        TABLE: this.dataPointTable.tableName,
+      },
+    })
+    this.dataPointTable.grantReadData(queryHandler)
+
+    const lambdaSource = this.graphqlApi.addLambdaDataSource(
+      'lambdaQuerySource',
+      queryHandler
+    )
+
+    lambdaSource.createResolver('ListDataPointsResolver', {
+      typeName: 'Query',
+      fieldName: 'listDataPoints',
     })
   }
 

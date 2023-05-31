@@ -43,6 +43,7 @@
     "typescript": "^5.0.2"
   },
   "dependencies": {
-    "@aws-appsync/utils": "^1.2.5"
+    "@aws-appsync/utils": "^1.2.5",
+    "aws-sdk": "^2.1387.0"
   }
 }
