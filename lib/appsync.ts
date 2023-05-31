@@ -3,12 +3,14 @@ import * as appsync from 'aws-cdk-lib/aws-appsync'
 import * as cognito from 'aws-cdk-lib/aws-cognito'
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 import * as lambda from 'aws-cdk-lib/aws-lambda'
+import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs'
 import { Construct } from 'constructs'
 import { join } from 'path'
 
 const appsyncDir = join(__dirname, '..', 'appsync')
 const resolversDir = join(appsyncDir, 'resolvers')
 const lambdaDir = join(__dirname, '..', 'lambda')
+const depsLockFilePath = join(__dirname, '..', 'pnpm-lock.yaml')
 
 type AppSyncProps = {
   userPool: cognito.IUserPool
@@ -52,6 +54,10 @@ export default class AppSync extends Construct {
         ],
       },
       xrayEnabled: true,
+      logConfig: {
+        excludeVerboseContent: false,
+        fieldLogLevel: appsync.FieldLogLevel.ALL,
+      },
     })
 
     // Outputs
@@ -154,7 +160,51 @@ export default class AppSync extends Construct {
   }
 
   private _createResolver_Mutation_createDataPoint() {
-    const createDataPointFunction = this.dataPointDataSource.createFunction(
+    const customAuthorizer = new nodejs.NodejsFunction(
+      this,
+      'CustomAuthorizer',
+      {
+        runtime: lambda.Runtime.NODEJS_16_X,
+        entry: join(lambdaDir, 'customAuthorizer', 'index.ts'),
+        depsLockFilePath: depsLockFilePath,
+        bundling: {
+          externalModules: [
+            'aws-sdk', // Use the 'aws-sdk' available in the Lambda runtime
+          ],
+        },
+        environment: { ALLOW: 'true' },
+      }
+    )
+
+    const customAuthSource = this.graphqlApi.addLambdaDataSource(
+      'customAuthSource',
+      customAuthorizer
+    )
+
+    const f1 = customAuthSource.createFunction('f1', {
+      name: 'userChecker',
+      code: appsync.Code.fromInline(`
+        import { util } from '@aws-appsync/utils';
+    
+        export function request(ctx) {
+            return {
+                "version" : "2017-02-28",
+                "operation": "Invoke",
+                "payload": ctx.args
+            };
+        }
+    
+        export function response(ctx) {
+            if (!ctx.result.allow) {
+                util.unauthorized();
+            }
+            return {};
+        }
+      `),
+      runtime: appsync.FunctionRuntime.JS_1_0_0,
+    })
+
+    const f2 = this.dataPointDataSource.createFunction(
       'CreateDataPointFunction',
       {
         name: 'CreateDataPointFunction',
@@ -165,12 +215,12 @@ export default class AppSync extends Construct {
       }
     )
 
-    this.graphqlApi.createResolver('CreateDataPointPipelineResolver', {
+    this.graphqlApi.createResolver('CreateDataPointPipeline', {
       typeName: 'Mutation',
       fieldName: 'createDataPoint',
       code: this.pipelineReqResCode,
       runtime: appsync.FunctionRuntime.JS_1_0_0,
-      pipelineConfig: [createDataPointFunction],
+      pipelineConfig: [f1, f2],
     })
   }
 
@@ -196,19 +246,25 @@ export default class AppSync extends Construct {
   }
 
   private _createResolver_Query_listDataPoints() {
-    const queryHandler = new lambda.Function(this, 'QueryDataHandler', {
+    const handler = new nodejs.NodejsFunction(this, 'QueryDataHandler', {
       runtime: lambda.Runtime.NODEJS_16_X,
-      code: lambda.Code.fromAsset(join(lambdaDir, 'listDataPoints')),
-      handler: 'index.handler',
+      entry: join(lambdaDir, 'listDataPoints', 'index.ts'),
+      depsLockFilePath: depsLockFilePath,
+      bundling: {
+        externalModules: [
+          'aws-sdk', // Use the 'aws-sdk' available in the Lambda runtime
+        ],
+      },
       environment: {
         TABLE: this.dataPointTable.tableName,
       },
     })
-    this.dataPointTable.grantReadData(queryHandler)
+
+    this.dataPointTable.grantReadData(handler)
 
     const lambdaSource = this.graphqlApi.addLambdaDataSource(
       'lambdaQuerySource',
-      queryHandler
+      handler
     )
 
     lambdaSource.createResolver('ListDataPointsResolver', {
