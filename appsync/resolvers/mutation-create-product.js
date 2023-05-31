@@ -1,8 +1,11 @@
 import { util } from '@aws-appsync/utils'
 
 export function request(ctx) {
-  const { input } = ctx.arguments
-  return dynamodbPutRequest({ key: { id: util.autoId() }, values: input })
+  const { input: values } = ctx.arguments
+  const key = {
+    id: util.autoId(),
+  }
+  return dynamodbPutRequest({ key, values })
 }
 
 export function response(ctx) {
