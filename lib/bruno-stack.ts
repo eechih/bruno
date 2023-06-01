@@ -43,13 +43,13 @@ export class BrunoStack extends cdk.Stack {
     })
 
     // Export values
-    new cdk.CfnOutput(this, 'USER_POOL_ID', {
+    new cdk.CfnOutput(this, 'UserPoolId', {
       value: userPool.userPoolId,
     })
-    new cdk.CfnOutput(this, 'USER_POOL_WEB_CLIENT_ID', {
+    new cdk.CfnOutput(this, 'UserPoolWebClientId', {
       value: userPoolClient.userPoolClientId,
     })
-    new cdk.CfnOutput(this, 'IDENTITY_POOL_ID', {
+    new cdk.CfnOutput(this, 'IdentityPoolId', {
       value: identityPool.ref,
     })
 
@@ -124,9 +124,27 @@ export class BrunoStack extends cdk.Stack {
     const dataPointTable = createGenericDataPointTable(this)
 
     const appsync = new AppSync(this, 'AppSync', {
+      domain,
+      subdomain: 'brunoapi',
       userPool,
       productTable,
       dataPointTable,
+    })
+
+    new cdk.CfnOutput(this, 'GraphqlCustomEndpoint', {
+      value: appsync.graphqlCustomEndpoint,
+    })
+
+    new cdk.CfnOutput(this, 'GraphqlEndpoint', {
+      value: appsync.graphqlApi.graphqlUrl,
+    })
+
+    new cdk.CfnOutput(this, 'GraphqlApiId', {
+      value: appsync.graphqlApi.apiId,
+    })
+
+    new cdk.CfnOutput(this, 'GraphqlApiKey', {
+      value: appsync.graphqlApi.apiKey || '',
     })
 
     // new WafConfig(this, 'BrunoAPI-waf', { graphqlApi: appsync.graphqlApi })

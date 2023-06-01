@@ -1,9 +1,11 @@
-import * as cdk from 'aws-cdk-lib'
+import { CfnOutput, Duration, Expiration, Fn } from 'aws-cdk-lib'
 import * as appsync from 'aws-cdk-lib/aws-appsync'
+import * as acm from 'aws-cdk-lib/aws-certificatemanager'
 import * as cognito from 'aws-cdk-lib/aws-cognito'
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 import * as lambda from 'aws-cdk-lib/aws-lambda'
 import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs'
+import * as route53 from 'aws-cdk-lib/aws-route53'
 import { Construct } from 'constructs'
 import { join } from 'path'
 
@@ -13,6 +15,8 @@ const lambdaDir = join(__dirname, '..', 'lambda')
 const depsLockFilePath = join(__dirname, '..', 'pnpm-lock.yaml')
 
 type AppSyncProps = {
+  domain: string
+  subdomain: string
   userPool: cognito.IUserPool
   productTable: dynamodb.ITable
   dataPointTable: dynamodb.ITable
@@ -20,6 +24,7 @@ type AppSyncProps = {
 
 export default class AppSync extends Construct {
   public readonly graphqlApi: appsync.GraphqlApi
+  public readonly graphqlCustomEndpoint: string
 
   private readonly productTable: dynamodb.ITable
   private readonly dataPointTable: dynamodb.ITable
@@ -31,7 +36,7 @@ export default class AppSync extends Construct {
 
   constructor(scope: Construct, id: string, props: AppSyncProps) {
     super(scope, id)
-    const { userPool } = props
+    const { userPool, domain, subdomain = 'api' } = props
     this.productTable = props.productTable
     this.dataPointTable = props.dataPointTable
 
@@ -41,15 +46,15 @@ export default class AppSync extends Construct {
       schema: appsync.SchemaFile.fromAsset(join(appsyncDir, 'schema.graphql')),
       authorizationConfig: {
         defaultAuthorization: {
-          authorizationType: appsync.AuthorizationType.USER_POOL,
-          userPoolConfig: { userPool },
+          authorizationType: appsync.AuthorizationType.API_KEY,
+          apiKeyConfig: {
+            expires: Expiration.after(Duration.days(365)),
+          },
         },
         additionalAuthorizationModes: [
           {
-            authorizationType: appsync.AuthorizationType.API_KEY,
-            apiKeyConfig: {
-              expires: cdk.Expiration.after(cdk.Duration.days(365)),
-            },
+            authorizationType: appsync.AuthorizationType.USER_POOL,
+            userPoolConfig: { userPool },
           },
         ],
       },
@@ -60,21 +65,47 @@ export default class AppSync extends Construct {
       },
     })
 
-    // Outputs
-    new cdk.CfnOutput(this, 'GraphQLAPI_ID', {
-      value: this.graphqlApi.apiId,
-    })
-    new cdk.CfnOutput(this, 'GraphQLAPI_URL', {
-      value: this.graphqlApi.graphqlUrl,
-    })
-    new cdk.CfnOutput(this, 'GraphQLAPI_KEY', {
-      value: this.graphqlApi.apiKey || '',
+    // 2. Configuring custom domain name
+    const zone = route53.HostedZone.fromLookup(this, 'Zone', {
+      domainName: domain,
     })
 
-    // 2. Set up a dummy Datasource
+    const domainName = subdomain + '.' + domain
+
+    const certificate = new acm.Certificate(this, 'Certificate', {
+      domainName: domainName,
+      validation: acm.CertificateValidation.fromDns(zone),
+    })
+
+    new CfnOutput(this, 'CertificateArn', {
+      value: certificate.certificateArn,
+    })
+
+    const appsyncDomainName = new appsync.CfnDomainName(
+      this,
+      'AppsyncDomainName',
+      {
+        certificateArn: certificate.certificateArn,
+        domainName: domainName,
+      }
+    )
+
+    new appsync.CfnDomainNameApiAssociation(this, 'DomainNameApiAssociation', {
+      apiId: this.graphqlApi.apiId,
+      domainName: appsyncDomainName.attrDomainName,
+    })
+
+    // Add record
+    new route53.CnameRecord(this, 'CnameRecord', {
+      recordName: domainName,
+      domainName: Fn.select(2, Fn.split('/', this.graphqlApi.graphqlUrl)),
+      zone,
+    })
+
+    this.graphqlCustomEndpoint = `https://${domainName}/graphql`
+
+    // 3. Set up datasources
     this.noneDataSource = this.graphqlApi.addNoneDataSource('NoneDataSource')
-
-    // 3. Set up table as a Datasource and grant access
     this.dataPointDataSource = this.graphqlApi.addDynamoDbDataSource(
       'DataPointDataSource',
       this.dataPointTable
@@ -84,6 +115,7 @@ export default class AppSync extends Construct {
       this.productTable
     )
 
+    // 4. Define resolvers
     this.pipelineReqResCode = appsync.Code.fromInline(`
       export function request(ctx) {
         return {}
@@ -93,8 +125,6 @@ export default class AppSync extends Construct {
         return ctx.prev.result
       }
     `)
-
-    // 4. Define resolvers
     // Mutations:
     this._createResolver_Mutation_createProduct()
     this._createResolver_Mutation_updateProduct()
@@ -135,13 +165,7 @@ export default class AppSync extends Construct {
       typeName: 'Mutation',
       fieldName: 'updateProduct',
       requestMappingTemplate: appsync.MappingTemplate.fromFile(
-        join(
-          __dirname,
-          '..',
-          'appsync',
-          'resolvers',
-          'Mutation.updateProduct.req.vtl'
-        )
+        join(resolversDir, 'Mutation.updateProduct.req.vtl')
       ),
       responseMappingTemplate: appsync.MappingTemplate.dynamoDbResultItem(),
     })
@@ -237,11 +261,22 @@ export default class AppSync extends Construct {
   }
 
   private _createResolver_Query_listProducts() {
-    this.productDataSource.createResolver('ListProductsResolver', {
+    const listProductsFunction = this.productDataSource.createFunction(
+      'ListProudctsFunction',
+      {
+        name: 'ListProudctsFunction',
+        code: appsync.Code.fromAsset(
+          join(resolversDir, 'queryListProducts.js')
+        ),
+        runtime: appsync.FunctionRuntime.JS_1_0_0,
+      }
+    )
+    this.graphqlApi.createResolver('ListProductsResolver', {
       typeName: 'Query',
       fieldName: 'listProducts',
-      requestMappingTemplate: appsync.MappingTemplate.dynamoDbScanTable(),
-      responseMappingTemplate: appsync.MappingTemplate.dynamoDbResultList(),
+      code: this.pipelineReqResCode,
+      runtime: appsync.FunctionRuntime.JS_1_0_0,
+      pipelineConfig: [listProductsFunction],
     })
   }
 
