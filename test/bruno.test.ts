@@ -14,6 +14,7 @@ test('SQS Queue Created', () => {
   //     VisibilityTimeout: 300
   //   });
 
+  console.log('process.platform', process.platform)
   const serialNum = Math.floor(Math.random() * 1000000)
   console.log('serialNum', serialNum)
 })

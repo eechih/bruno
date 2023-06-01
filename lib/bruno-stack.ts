@@ -132,6 +132,7 @@ export class BrunoStack extends cdk.Stack {
       userPool,
       productTable,
       dataPointTable,
+      chromiumLayer: chromium,
     })
 
     new cdk.CfnOutput(this, 'GraphqlCustomEndpoint', {

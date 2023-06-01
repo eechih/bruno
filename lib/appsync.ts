@@ -20,6 +20,7 @@ type AppSyncProps = {
   userPool: cognito.IUserPool
   productTable: dynamodb.ITable
   dataPointTable: dynamodb.ITable
+  chromiumLayer: lambda.ILayerVersion
 }
 
 export default class AppSync extends Construct {
@@ -34,11 +35,14 @@ export default class AppSync extends Construct {
   private readonly dataPointDataSource: appsync.DynamoDbDataSource
   private readonly pipelineReqResCode: appsync.Code
 
+  private readonly chromiumLayer: lambda.ILayerVersion
+
   constructor(scope: Construct, id: string, props: AppSyncProps) {
     super(scope, id)
     const { userPool, domain, subdomain = 'api' } = props
     this.productTable = props.productTable
     this.dataPointTable = props.dataPointTable
+    this.chromiumLayer = props.chromiumLayer
 
     // 1. Define AppSync API
     this.graphqlApi = new appsync.GraphqlApi(this, 'QraphQLAPI', {
@@ -131,6 +135,7 @@ export default class AppSync extends Construct {
     this._createResolver_Mutation_deleteProduct()
     this._createResolver_Mutation_createDataPoint()
     // Queries:
+    this._createResolver_Query_crawlFBPost()
     this._createResolver_Query_getProduct()
     this._createResolver_Query_listProducts()
     this._createResolver_Query_listDataPoints()
@@ -245,6 +250,35 @@ export default class AppSync extends Construct {
       code: this.pipelineReqResCode,
       runtime: appsync.FunctionRuntime.JS_1_0_0,
       pipelineConfig: [f1, f2],
+    })
+  }
+
+  private _createResolver_Query_crawlFBPost() {
+    const handler = new nodejs.NodejsFunction(this, 'CrawlFBPostHandler', {
+      runtime: lambda.Runtime.NODEJS_16_X,
+      entry: join(lambdaDir, 'crawlFBPost', 'index.ts'),
+      depsLockFilePath: depsLockFilePath,
+      bundling: {
+        externalModules: [
+          'aws-sdk', // Use the 'aws-sdk' available in the Lambda runtime
+        ],
+      },
+      environment: {
+        TABLE: this.dataPointTable.tableName,
+      },
+      layers: [this.chromiumLayer],
+      memorySize: 1600,
+      timeout: Duration.seconds(60),
+    })
+
+    const lambdaSource = this.graphqlApi.addLambdaDataSource(
+      'CrawlFBPostLambdaDataSource',
+      handler
+    )
+
+    lambdaSource.createResolver('CrawlFBPostResolver', {
+      typeName: 'Query',
+      fieldName: 'crawlFBPost',
     })
   }
 
