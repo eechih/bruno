@@ -5,7 +5,7 @@ import moment from 'moment'
 import puppeteer, { Browser, Page, Protocol } from 'puppeteer-core'
 
 type Arguments = {
-  postUrl: string
+  fbPostUrl: string
   newBrowser: boolean
 }
 
@@ -21,16 +21,28 @@ const s3Client = new S3Client({ region: REGION })
 let browser: Nullable<Browser> = null
 let page: Nullable<Page> = null
 
+const pruneUrl = (url: string): string => {
+  const { origin, pathname } = new URL(url)
+  return origin + pathname
+}
+
+const toFBPostId = (fbPostUrl: string): string => {
+  const REGEX = /\/groups\/(\w+)\/posts\/(\w+)/
+  const { pathname } = new URL(fbPostUrl)
+  const mo = pathname.match(REGEX)
+  if (mo) return `${mo[1]}_${mo[2]}`
+  return ''
+}
+
 exports.handler = async (event: AppSyncResolverEvent<Arguments>) => {
   console.log('request:', JSON.stringify(event, undefined, 2))
   const {
-    arguments: { postUrl, newBrowser },
+    arguments: { fbPostUrl, newBrowser },
     info: { fieldName },
   } = event
 
   try {
-    if (fieldName === 'crawlFBPost') {
-      const startedAt = moment()
+    if (fieldName === 'importPost') {
       if (browser !== null && newBrowser) {
         console.log('close all pages...')
         const pages = await browser?.pages()
@@ -70,8 +82,9 @@ exports.handler = async (event: AppSyncResolverEvent<Arguments>) => {
         }
       }
 
-      console.log('page goto', postUrl)
-      await page.goto(postUrl, { waitUntil: 'domcontentloaded' })
+      const url = pruneUrl(fbPostUrl)
+      console.log('page goto', url)
+      await page.goto(url, { waitUntil: 'domcontentloaded' })
 
       const message = await page.$eval(
         "head > meta[property='og:image:alt']",
@@ -85,13 +98,11 @@ exports.handler = async (event: AppSyncResolverEvent<Arguments>) => {
       )
       console.log('image', image)
 
-      const endedAt = moment()
       return {
-        postUrl,
+        fbPostId: toFBPostId(fbPostUrl),
         message,
-        image,
-        crawledAt: endedAt.toISOString(),
-        consumingTime: endedAt.unix() - startedAt.unix(),
+        images: [{ src: image }],
+        createdAt: moment().toISOString(),
       }
     }
   } catch (err) {

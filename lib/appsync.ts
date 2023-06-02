@@ -139,7 +139,7 @@ export default class AppSync extends Construct {
     this._createResolver_Mutation_deleteProduct()
     this._createResolver_Mutation_createDataPoint()
     // Queries:
-    this._createResolver_Query_crawlFBPost()
+    this._createResolver_Query_importPost()
     this._createResolver_Query_getProduct()
     this._createResolver_Query_listProducts()
     this._createResolver_Query_listDataPoints()
@@ -257,16 +257,11 @@ export default class AppSync extends Construct {
     })
   }
 
-  private _createResolver_Query_crawlFBPost() {
-    const handler = new nodejs.NodejsFunction(this, 'CrawlFBPostHandler', {
+  private _createResolver_Query_importPost() {
+    const handler = new nodejs.NodejsFunction(this, 'ImportPostHandler', {
       runtime: lambda.Runtime.NODEJS_16_X,
-      entry: join(lambdaDir, 'crawlFBPost', 'index.ts'),
+      entry: join(lambdaDir, 'importPost', 'index.ts'),
       depsLockFilePath: depsLockFilePath,
-      bundling: {
-        externalModules: [
-          'aws-sdk', // Use the 'aws-sdk' available in the Lambda runtime
-        ],
-      },
       environment: {
         BUCKET_NAME: this.bucket.bucketName,
       },
@@ -278,13 +273,13 @@ export default class AppSync extends Construct {
     this.bucket.grantRead(handler)
 
     const lambdaSource = this.graphqlApi.addLambdaDataSource(
-      'CrawlFBPostLambdaDataSource',
+      'ImportPostLambdaDataSource',
       handler
     )
 
-    lambdaSource.createResolver('CrawlFBPostResolver', {
+    lambdaSource.createResolver('ImportPostResolver', {
       typeName: 'Query',
-      fieldName: 'crawlFBPost',
+      fieldName: 'importPost',
     })
   }
 

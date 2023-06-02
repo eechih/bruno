@@ -8,7 +8,7 @@ type Mutation {
 }
 
 type Query {
-  crawlFBPost(postUrl: String!, newBrowser: Boolean): FBPost
+  importPost(fbPostUrl: String!, newBrowser: Boolean): Post
   getProduct(id: ID!): Product
   listProducts(
     filter: TableProductFilterInput
@@ -44,12 +44,15 @@ type Subscription {
     @aws_subscribe(mutations: ["deleteDataPoint"])
 }
 
-type FBPost {
-  postUrl: String!
+type Image {
+  src: String!
+}
+
+type Post {
+  fbPostId: String!
   message: String
-  image: String
-  crawledAt: AWSDateTime!
-  consumingTime: Int!
+  images: [Image]
+  createdAt: AWSDateTime!
 }
 
 type Product {
