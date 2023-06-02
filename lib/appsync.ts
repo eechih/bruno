@@ -6,6 +6,7 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 import * as lambda from 'aws-cdk-lib/aws-lambda'
 import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs'
 import * as route53 from 'aws-cdk-lib/aws-route53'
+import * as s3 from 'aws-cdk-lib/aws-s3'
 import { Construct } from 'constructs'
 import { join } from 'path'
 
@@ -21,6 +22,7 @@ type AppSyncProps = {
   productTable: dynamodb.ITable
   dataPointTable: dynamodb.ITable
   chromiumLayer: lambda.ILayerVersion
+  bucket: s3.IBucket
 }
 
 export default class AppSync extends Construct {
@@ -36,6 +38,7 @@ export default class AppSync extends Construct {
   private readonly pipelineReqResCode: appsync.Code
 
   private readonly chromiumLayer: lambda.ILayerVersion
+  private readonly bucket: s3.IBucket
 
   constructor(scope: Construct, id: string, props: AppSyncProps) {
     super(scope, id)
@@ -43,6 +46,7 @@ export default class AppSync extends Construct {
     this.productTable = props.productTable
     this.dataPointTable = props.dataPointTable
     this.chromiumLayer = props.chromiumLayer
+    this.bucket = props.bucket
 
     // 1. Define AppSync API
     this.graphqlApi = new appsync.GraphqlApi(this, 'QraphQLAPI', {
@@ -264,12 +268,14 @@ export default class AppSync extends Construct {
         ],
       },
       environment: {
-        TABLE: this.dataPointTable.tableName,
+        BUCKET_NAME: this.bucket.bucketName,
       },
       layers: [this.chromiumLayer],
       memorySize: 1600,
       timeout: Duration.seconds(60),
     })
+
+    this.bucket.grantRead(handler)
 
     const lambdaSource = this.graphqlApi.addLambdaDataSource(
       'CrawlFBPostLambdaDataSource',

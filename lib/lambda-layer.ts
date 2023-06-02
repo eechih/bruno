@@ -13,7 +13,7 @@ export default class LambdaLayer extends Construct {
 
     this.chromium = new lambda.LayerVersion(this, 'Chromium', {
       code: lambda.Code.fromAsset(join(layersDir, 'chromium')),
-      layerVersionName: 'chromium',
+      layerVersionName: 'bruno-chromium',
       description: 'Chromium v113',
       compatibleArchitectures: [lambda.Architecture.X86_64],
       compatibleRuntimes: [

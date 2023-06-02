@@ -8,7 +8,7 @@ type Mutation {
 }
 
 type Query {
-  crawlFBPost(url: String!): FBPost
+  crawlFBPost(postUrl: String!, newBrowser: Boolean): FBPost
   getProduct(id: ID!): Product
   listProducts(
     filter: TableProductFilterInput
@@ -45,9 +45,11 @@ type Subscription {
 }
 
 type FBPost {
-  url: String!
-  content: String
+  postUrl: String!
+  message: String
   image: String
+  crawledAt: AWSDateTime!
+  consumingTime: Int!
 }
 
 type Product {
