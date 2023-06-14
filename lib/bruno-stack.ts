@@ -26,11 +26,39 @@ export class BrunoStack extends cdk.Stack {
       selfSignUpEnabled: true, // Allow users to sign up
       autoVerify: { email: true }, // Verify email addresses by sending a verification code
       signInAliases: { email: true }, // Set email as an alias
+      passwordPolicy: {
+        minLength: 6,
+        requireLowercase: true,
+        requireUppercase: false,
+        requireDigits: false,
+        requireSymbols: false,
+      },
+      accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
     })
+
+    const OAUTH_SCOPES: cognito.OAuthScope[] = [
+      // cognito.OAuthScope.PHONE,
+      // cognito.OAuthScope.EMAIL,
+      cognito.OAuthScope.OPENID,
+      // cognito.OAuthScope.PROFILE,
+    ]
+
+    const CALLBACK_URL = 'http://localhost:3000/api/auth/callback/cognito'
 
     const userPoolClient = new cognito.UserPoolClient(this, 'UserPoolClient', {
       userPool,
-      generateSecret: false, // Don't need to generate secret for web app running on browsers
+      generateSecret: true, // Don't need to generate secret for web app running on browsers
+      authFlows: {
+        userPassword: true,
+        userSrp: true,
+        adminUserPassword: true,
+        custom: true,
+      },
+      oAuth: {
+        callbackUrls: [CALLBACK_URL],
+        scopes: OAUTH_SCOPES,
+      },
     })
 
     const identityPool = new cognito.CfnIdentityPool(this, 'IdentityPool', {
@@ -43,6 +71,15 @@ export class BrunoStack extends cdk.Stack {
       ],
     })
 
+    const userPoolDomain = new cognito.UserPoolDomain(this, 'UserPoolDomain', {
+      userPool: userPool,
+      cognitoDomain: {
+        domainPrefix: 'bruno',
+      },
+    })
+
+    userPoolDomain.domainName
+
     // Export values
     new cdk.CfnOutput(this, 'UserPoolId', {
       value: userPool.userPoolId,
@@ -52,6 +89,14 @@ export class BrunoStack extends cdk.Stack {
     })
     new cdk.CfnOutput(this, 'IdentityPoolId', {
       value: identityPool.ref,
+    })
+    new cdk.CfnOutput(this, 'CognitoDomain', {
+      value: userPoolDomain.domainName,
+    })
+    new cdk.CfnOutput(this, 'LoginUrl', {
+      value: userPoolDomain.signInUrl(userPoolClient, {
+        redirectUri: CALLBACK_URL,
+      }),
     })
 
     // Create S3 Bucket

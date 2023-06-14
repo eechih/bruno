@@ -54,15 +54,15 @@ export default class AppSync extends Construct {
       schema: appsync.SchemaFile.fromAsset(join(appsyncDir, 'schema.graphql')),
       authorizationConfig: {
         defaultAuthorization: {
-          authorizationType: appsync.AuthorizationType.API_KEY,
-          apiKeyConfig: {
-            expires: Expiration.after(Duration.days(365)),
-          },
+          authorizationType: appsync.AuthorizationType.USER_POOL,
+          userPoolConfig: { userPool },
         },
         additionalAuthorizationModes: [
           {
-            authorizationType: appsync.AuthorizationType.USER_POOL,
-            userPoolConfig: { userPool },
+            authorizationType: appsync.AuthorizationType.API_KEY,
+            apiKeyConfig: {
+              expires: Expiration.after(Duration.days(364)),
+            },
           },
         ],
       },

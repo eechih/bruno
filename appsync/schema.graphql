@@ -9,7 +9,7 @@ type Mutation {
 
 type Query {
   importPost(fbPostUrl: String!, newBrowser: Boolean): Post
-  getProduct(id: ID!): Product
+  getProduct(id: ID!): Product @aws_api_key @aws_cognito_user_pools
   listProducts(
     filter: TableProductFilterInput
     limit: Int
@@ -55,7 +55,7 @@ type Post {
   createdAt: AWSDateTime!
 }
 
-type Product {
+type Product @aws_api_key @aws_cognito_user_pools {
   id: ID!
   name: String
   description: String
