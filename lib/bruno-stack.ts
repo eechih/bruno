@@ -38,10 +38,9 @@ export class BrunoStack extends cdk.Stack {
     })
 
     const OAUTH_SCOPES: cognito.OAuthScope[] = [
-      // cognito.OAuthScope.PHONE,
-      // cognito.OAuthScope.EMAIL,
+      cognito.OAuthScope.EMAIL,
       cognito.OAuthScope.OPENID,
-      // cognito.OAuthScope.PROFILE,
+      cognito.OAuthScope.PROFILE,
     ]
 
     const CALLBACK_URL = 'http://localhost:3000/api/auth/callback/cognito'
