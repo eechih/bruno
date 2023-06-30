@@ -41,13 +41,14 @@ export class BrunoStack extends cdk.Stack {
       cognito.OAuthScope.EMAIL,
       cognito.OAuthScope.OPENID,
       cognito.OAuthScope.PROFILE,
+      cognito.OAuthScope.COGNITO_ADMIN,
     ]
 
     const CALLBACK_URL = 'http://localhost:3000/api/auth/callback/cognito'
 
-    const userPoolClient = new cognito.UserPoolClient(this, 'UserPoolClient', {
+    const userPoolClientProps = {
       userPool,
-      generateSecret: true, // Don't need to generate secret for web app running on browsers
+      generateSecret: false,
       authFlows: {
         userPassword: true,
         userSrp: true,
@@ -56,15 +57,39 @@ export class BrunoStack extends cdk.Stack {
       },
       oAuth: {
         callbackUrls: [CALLBACK_URL],
-        scopes: OAUTH_SCOPES,
+        scopes: [
+          cognito.OAuthScope.EMAIL,
+          cognito.OAuthScope.OPENID,
+          cognito.OAuthScope.PROFILE,
+          cognito.OAuthScope.COGNITO_ADMIN,
+        ],
       },
-    })
+    }
+
+    const userPoolClient = new cognito.UserPoolClient(
+      this,
+      'UserPoolClient',
+      userPoolClientProps
+    )
+
+    const userPoolWebClient = new cognito.UserPoolClient(
+      this,
+      'UserPoolWebClient',
+      {
+        ...userPoolClientProps,
+        generateSecret: true,
+      }
+    )
 
     const identityPool = new cognito.CfnIdentityPool(this, 'IdentityPool', {
       allowUnauthenticatedIdentities: false, // Don't allow unathenticated users
       cognitoIdentityProviders: [
         {
           clientId: userPoolClient.userPoolClientId,
+          providerName: userPool.userPoolProviderName,
+        },
+        {
+          clientId: userPoolWebClient.userPoolClientId,
           providerName: userPool.userPoolProviderName,
         },
       ],
@@ -84,7 +109,7 @@ export class BrunoStack extends cdk.Stack {
       value: userPool.userPoolId,
     })
     new cdk.CfnOutput(this, 'UserPoolWebClientId', {
-      value: userPoolClient.userPoolClientId,
+      value: userPoolWebClient.userPoolClientId,
     })
     new cdk.CfnOutput(this, 'IdentityPoolId', {
       value: identityPool.ref,
@@ -93,7 +118,7 @@ export class BrunoStack extends cdk.Stack {
       value: userPoolDomain.domainName,
     })
     new cdk.CfnOutput(this, 'LoginUrl', {
-      value: userPoolDomain.signInUrl(userPoolClient, {
+      value: userPoolDomain.signInUrl(userPoolWebClient, {
         redirectUri: CALLBACK_URL,
       }),
     })
