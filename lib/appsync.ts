@@ -137,6 +137,7 @@ export default class AppSync extends Construct {
     this._createResolver_Mutation_createProduct()
     this._createResolver_Mutation_updateProduct()
     this._createResolver_Mutation_deleteProduct()
+    this._createResolver_Mutation_publishProduct()
     this._createResolver_Mutation_createDataPoint()
     // Queries:
     this._createResolver_Query_importPost()
@@ -189,6 +190,34 @@ export default class AppSync extends Construct {
         'input.id'
       ),
       responseMappingTemplate: appsync.MappingTemplate.dynamoDbResultItem(),
+    })
+  }
+
+  private _createResolver_Mutation_publishProduct() {
+    const handler = new nodejs.NodejsFunction(this, 'PublishProductHandler', {
+      runtime: lambda.Runtime.NODEJS_16_X,
+      entry: join(lambdaDir, 'publishProduct', 'index.ts'),
+      depsLockFilePath: depsLockFilePath,
+      bundling: {
+        externalModules: [
+          'aws-sdk', // Use the 'aws-sdk' available in the Lambda runtime
+        ],
+      },
+      environment: {
+        PRODUCT_TABLE: this.productTable.tableName,
+      },
+    })
+
+    this.productTable.grantReadData(handler)
+
+    const lambdaSource = this.graphqlApi.addLambdaDataSource(
+      'publishProductLambdaDataSource',
+      handler
+    )
+
+    lambdaSource.createResolver('PublishProductResolver', {
+      typeName: 'Mutation',
+      fieldName: 'publishProduct',
     })
   }
 
