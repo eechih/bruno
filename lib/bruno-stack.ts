@@ -5,8 +5,9 @@ import { Construct } from 'constructs'
 import AppSync from './appsync'
 import CognitoAuthRole from './cognito-auth-role'
 import CognitoUnuthRole from './cognito-unauth-role'
-import { createGenericDataPointTable, createProductTable } from './dynamodb'
+import { createGenericDataPointTable } from './dynamodb'
 import LambdaLayer from './lambda-layer'
+import Product from './product'
 // import WafConfig from './waf-config'
 
 interface BrunoStackProps extends cdk.StackProps {
@@ -192,14 +193,16 @@ export class BrunoStack extends cdk.Stack {
 
     const { chromium } = new LambdaLayer(this, 'LambdaLayer')
 
-    const productTable = createProductTable(this)
     const dataPointTable = createGenericDataPointTable(this)
+
+    const product = new Product(this, 'Product')
 
     const appsync = new AppSync(this, 'AppSync', {
       domain,
       subdomain: 'brunoapi',
       userPool,
-      productTable,
+      productTable: product.table,
+      productHandler: product.handler,
       dataPointTable,
       chromiumLayer: chromium,
       bucket: bucket,

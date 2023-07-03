@@ -10,6 +10,8 @@ import * as s3 from 'aws-cdk-lib/aws-s3'
 import { Construct } from 'constructs'
 import { join } from 'path'
 
+import { toPascalCase } from '../lambda/libs/utils/string-util'
+
 const appsyncDir = join(__dirname, '..', 'appsync')
 const resolversDir = join(appsyncDir, 'resolvers')
 const lambdaDir = join(__dirname, '..', 'lambda')
@@ -23,14 +25,28 @@ type AppSyncProps = {
   dataPointTable: dynamodb.ITable
   chromiumLayer: lambda.ILayerVersion
   bucket: s3.IBucket
+  productHandler: lambda.IFunction
 }
 
+function createResolver(
+  lambdaSource: appsync.LambdaDataSource,
+  typeName: 'Mutation' | 'Query',
+  fieldName: string
+): appsync.Resolver {
+  const id = toPascalCase(fieldName + 'Resolver')
+  return lambdaSource.createResolver(id, {
+    typeName,
+    fieldName,
+  })
+}
 export default class AppSync extends Construct {
   public readonly graphqlApi: appsync.GraphqlApi
   public readonly graphqlCustomEndpoint: string
 
   private readonly productTable: dynamodb.ITable
   private readonly dataPointTable: dynamodb.ITable
+
+  private readonly productHandler: lambda.IFunction
 
   private readonly noneDataSource: appsync.NoneDataSource
   private readonly productDataSource: appsync.DynamoDbDataSource
@@ -44,6 +60,7 @@ export default class AppSync extends Construct {
     super(scope, id)
     const { userPool, domain, subdomain = 'api' } = props
     this.productTable = props.productTable
+    this.productHandler = props.productHandler
     this.dataPointTable = props.dataPointTable
     this.chromiumLayer = props.chromiumLayer
     this.bucket = props.bucket
@@ -133,16 +150,28 @@ export default class AppSync extends Construct {
         return ctx.prev.result
       }
     `)
+
+    const productDS = this.graphqlApi.addLambdaDataSource(
+      'productLambdaDataSource',
+      this.productHandler
+    )
+
+    createResolver(productDS, 'Query', 'getProduct')
+    createResolver(productDS, 'Query', 'listProducts')
+    createResolver(productDS, 'Mutation', 'createProduct')
+    createResolver(productDS, 'Mutation', 'updateProduct')
+    createResolver(productDS, 'Mutation', 'deleteProduct')
+    createResolver(productDS, 'Mutation', 'publishProduct')
+
     // Mutations:
-    this._createResolver_Mutation_createProduct()
-    this._createResolver_Mutation_updateProduct()
-    this._createResolver_Mutation_deleteProduct()
-    this._createResolver_Mutation_publishProduct()
+    // this._createResolver_Mutation_createProduct()
+    // this._createResolver_Mutation_updateProduct()
+    // this._createResolver_Mutation_deleteProduct()
     this._createResolver_Mutation_createDataPoint()
     // Queries:
     this._createResolver_Query_importPost()
-    this._createResolver_Query_getProduct()
-    this._createResolver_Query_listProducts()
+    // this._createResolver_Query_getProduct()
+    // this._createResolver_Query_listProducts()
     this._createResolver_Query_listDataPoints()
     this._createResolver_Query_queryDataPointsByNameAndDateTime()
     // Subscriptions:
@@ -194,25 +223,9 @@ export default class AppSync extends Construct {
   }
 
   private _createResolver_Mutation_publishProduct() {
-    const handler = new nodejs.NodejsFunction(this, 'PublishProductHandler', {
-      runtime: lambda.Runtime.NODEJS_16_X,
-      entry: join(lambdaDir, 'publishProduct', 'index.ts'),
-      depsLockFilePath: depsLockFilePath,
-      bundling: {
-        externalModules: [
-          'aws-sdk', // Use the 'aws-sdk' available in the Lambda runtime
-        ],
-      },
-      environment: {
-        PRODUCT_TABLE: this.productTable.tableName,
-      },
-    })
-
-    this.productTable.grantReadData(handler)
-
     const lambdaSource = this.graphqlApi.addLambdaDataSource(
       'publishProductLambdaDataSource',
-      handler
+      this.productHandler
     )
 
     lambdaSource.createResolver('PublishProductResolver', {
