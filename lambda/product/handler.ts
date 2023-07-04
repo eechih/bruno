@@ -27,18 +27,23 @@ export const handler = async (
   } = event
 
   if (fieldName === 'listProducts') {
-    return listProducts(event.arguments as ListProductsArgs)
+    const { limit, nextToken } = event.arguments as ListProductsArgs
+    return listProducts({ limit, nextToken })
   } else if (fieldName === 'getProduct') {
-    return getProduct(event.arguments as GetProductArgs)
+    const { id } = event.arguments as GetProductArgs
+    return getProduct({ id })
   } else if (fieldName === 'createProduct') {
-    return createProduct(event.arguments as CreateProductArgs)
+    const { input } = event.arguments as CreateProductArgs
+    return createProduct(input)
   } else if (fieldName === 'updateProduct') {
     const { input } = event.arguments as UpdateProductArgs
     return updateProduct(input)
   } else if (fieldName === 'deleteProduct') {
-    return deleteProduct(event.arguments as DeleteProductArgs)
+    const { input } = event.arguments as DeleteProductArgs
+    return deleteProduct(input)
   } else if (fieldName === 'publishProduct') {
-    return publishProduct(event.arguments as PublishProductArgs)
+    const { input } = event.arguments as PublishProductArgs
+    return publishProduct(input)
   } else {
     throw new Error('Unknown field, unable to resolve' + fieldName)
   }

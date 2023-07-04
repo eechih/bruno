@@ -1,8 +1,10 @@
-import { Product, PublishProductArgs } from './types'
+import { Product, PublishProductInput } from './types'
 
-export default async function (args: PublishProductArgs): Promise<Product> {
-  console.log('deleteProduct', args)
-  const id = args.input.id
+export default async function publishProduct(
+  input: PublishProductInput
+): Promise<Product> {
+  console.log('publishProduct', input)
+  const { id } = input
   return {
     id: id,
     name: id + '- name',

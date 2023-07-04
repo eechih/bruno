@@ -29,12 +29,13 @@ test('should update product to the DynamoDB', async () => {
   expect(ddbMock).toHaveReceivedCommandWith(UpdateCommand, {
     Key: { id: input.id },
     UpdateExpression:
-      'SET #name = :name, #price = :price, #images = :images REMOVE #provider = :provider',
+      'SET #name = :name, #price = :price, #images = :images, #updateAt = :updatedAt REMOVE #provider = :provider',
     ExpressionAttributeNames: {
       '#name': 'name',
       '#price': 'price',
       '#images': 'images',
       '#provider': 'provider',
+      '#updateAt': 'updateAt',
     },
     ExpressionAttributeValues: {
       ':name': input.name,

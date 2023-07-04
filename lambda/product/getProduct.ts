@@ -1,9 +1,11 @@
 import { GetCommand } from '@aws-sdk/lib-dynamodb'
 
 import { ddbDocClient } from '../libs/ddbClient'
-import { GetProductArgs, Product } from './types'
+import { Product } from './types'
 
-export default async function (args: GetProductArgs): Promise<Product> {
+export default async function getProduct(args: {
+  id: string
+}): Promise<Product> {
   console.log('getProduct', args)
   const command = new GetCommand({
     TableName: process.env.PRODUCT_TABLE_NAME,

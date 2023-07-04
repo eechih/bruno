@@ -1,13 +1,16 @@
 import { DeleteCommand } from '@aws-sdk/lib-dynamodb'
 
 import { ddbDocClient } from '../libs/ddbClient'
-import { DeleteProductArgs, Product } from './types'
+import { DeleteProductInput, Product } from './types'
 
-export default async function (args: DeleteProductArgs): Promise<Product> {
-  console.log('deleteProduct', args)
+export default async function deleteProduct(
+  input: DeleteProductInput
+): Promise<Product> {
+  console.log('deleteProduct', input)
+
   const command = new DeleteCommand({
     TableName: process.env.PRODUCT_TABLE_NAME,
-    Key: { id: args.input.id },
+    Key: { id: input.id },
   })
   const response = await ddbDocClient.send(command)
   if (!response.Attributes) throw new Error('Cloud not delete product.')
