@@ -1,8 +1,14 @@
 import { Product, PublishProductInput } from './types'
 
-export default async function publishProduct(
+interface PublishProductParams {
   input: PublishProductInput
-): Promise<Product> {
+  owner: string
+}
+
+export default async function publishProduct({
+  input,
+  owner,
+}: PublishProductParams): Promise<Product> {
   console.log('publishProduct', input)
   const { id } = input
   return {

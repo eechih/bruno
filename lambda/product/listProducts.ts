@@ -6,13 +6,17 @@ import { Product, ProductConnection } from './types'
 
 const tableName = process.env.PRODUCT_TABLE_NAME!
 
-export default async function listProducts(args: {
+interface ListProductsParams {
   limit?: number
   nextToken?: string
-  owner?: string
-}): Promise<ProductConnection> {
-  console.log('listProducts', args)
-  const { limit, nextToken, owner } = args
+  owner: string
+}
+
+export default async function listProducts(
+  params: ListProductsParams
+): Promise<ProductConnection> {
+  console.log('listProducts', params)
+  const { limit, nextToken, owner } = params
   const command = new QueryCommand({
     TableName: tableName,
     Limit: limit,

@@ -3,9 +3,15 @@ import { DeleteCommand } from '@aws-sdk/lib-dynamodb'
 import { ddbDocClient } from '../../libs/ddbClient'
 import { DeleteProductInput, Product } from './types'
 
-export default async function deleteProduct(
+interface DeleteProductParams {
   input: DeleteProductInput
-): Promise<Product> {
+  owner: string
+}
+
+export default async function deleteProduct({
+  input,
+  owner,
+}: DeleteProductParams): Promise<Product> {
   console.log('deleteProduct', input)
 
   const command = new DeleteCommand({

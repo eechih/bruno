@@ -7,6 +7,15 @@ const eventJSON: AppSyncResolverEvent<PublishProductArgs> = {
       id: '111',
     },
   },
+  identity: {
+    sub: 'mock',
+    issuer: 'mock',
+    username: 'mock',
+    claims: {},
+    sourceIp: [],
+    defaultAuthStrategy: '',
+    groups: [],
+  },
   source: null,
   request: { headers: {}, domainName: null },
   info: {

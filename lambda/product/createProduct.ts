@@ -5,10 +5,15 @@ import { ddbDocClient } from '../../libs/ddbClient'
 import { util } from '../../utils'
 import { CreateProductInput, Product } from './types'
 
-export default async function createProduct(
-  input: CreateProductInput,
+interface CreateProductParams {
+  input: CreateProductInput
   owner: string
-): Promise<Product> {
+}
+
+export default async function createProduct({
+  input,
+  owner,
+}: CreateProductParams): Promise<Product> {
   console.log('createProduct', input)
 
   const newItem: Record<string, NativeAttributeValue> = {

@@ -23,7 +23,7 @@ test('should update product to the DynamoDB', async () => {
     Attributes: input,
   })
 
-  const updated = await updateProduct(input)
+  const updated = await updateProduct({ input, owner: 'mock' })
   expect(updated).toEqual(input)
   expect(ddbMock).toHaveReceivedCommandTimes(UpdateCommand, 1)
 })

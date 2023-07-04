@@ -24,26 +24,30 @@ export const handler = async (
   console.log('Got an Invoke Request.')
 
   const { fieldName } = event.info
-  const { sub: owner } = (event.identity ?? {}) as AppSyncIdentityCognito
+  const identity = event.identity as AppSyncIdentityCognito
+
+  if (!identity) throw new Error('Forbidden, missing identity information')
+
+  const { sub: owner } = identity
 
   if (fieldName === 'listProducts') {
-    const { limit, nextToken } = event.arguments as ListProductsArgs
-    return listProducts({ limit, nextToken, owner })
+    const args = event.arguments as ListProductsArgs
+    return listProducts({ ...args, owner })
   } else if (fieldName === 'getProduct') {
-    const { id } = event.arguments as GetProductArgs
-    return getProduct({ id })
+    const args = event.arguments as GetProductArgs
+    return getProduct({ ...args, owner })
   } else if (fieldName === 'createProduct') {
     const { input } = event.arguments as CreateProductArgs
-    return createProduct(input, owner)
+    return createProduct({ input, owner })
   } else if (fieldName === 'updateProduct') {
     const { input } = event.arguments as UpdateProductArgs
-    return updateProduct(input)
+    return updateProduct({ input, owner })
   } else if (fieldName === 'deleteProduct') {
     const { input } = event.arguments as DeleteProductArgs
-    return deleteProduct(input)
+    return deleteProduct({ input, owner })
   } else if (fieldName === 'publishProduct') {
     const { input } = event.arguments as PublishProductArgs
-    return publishProduct(input)
+    return publishProduct({ input, owner })
   } else {
     throw new Error('Unknown field, unable to resolve' + fieldName)
   }

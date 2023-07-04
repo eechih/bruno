@@ -4,9 +4,15 @@ import { Product, UpdateProductInput } from './types'
 
 const tableName = process.env.PRODUCT_TABLE_NAME!
 
-export default async function updateProduct(
+interface UpdateProductParams {
   input: UpdateProductInput
-): Promise<Product> {
+  owner: string
+}
+
+export default async function updateProduct({
+  input,
+  owner,
+}: UpdateProductParams): Promise<Product> {
   console.log('updateProduct', input)
   const key = { id: input.id }
   const attributes = { ...input, updatedAt: util.time.nowISO8601() }
