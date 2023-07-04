@@ -1,3 +1,8 @@
+export type ProductConnection = {
+  items: Pick<Product, 'id'>[]
+  nextToken?: string
+}
+
 export type Product = {
   id: string
   name: string
@@ -14,55 +19,66 @@ export type Product = {
   owner?: string
 }
 
-export type ProductConnection = {
-  items: Pick<Product, 'id'>[]
-  nextToken?: string
-}
+export type CreateProductInput = Pick<
+  Product,
+  | 'name'
+  | 'description'
+  | 'price'
+  | 'cost'
+  | 'optionGrid'
+  | 'images'
+  | 'provider'
+  | 'offShelfAt'
+>
 
-export type GetProductArgs = Pick<Product, 'id'>
+export type UpdateProductInput = Pick<Product, 'id'> &
+  Partial<
+    Pick<
+      Product,
+      | 'name'
+      | 'description'
+      | 'price'
+      | 'cost'
+      | 'optionGrid'
+      | 'images'
+      | 'provider'
+      | 'offShelfAt'
+    >
+  >
+
+export type DeleteProductInput = Pick<Product, 'id'>
+
+export type PublishProductInput = Pick<Product, 'id'>
 
 export type ListProductsArgs = {
   limit?: number
   nextToken?: string
 }
 
-export type ListProductsResult = ProductConnection
+export type GetProductArgs = Pick<Product, 'id'>
 
 export type CreateProductArgs = {
-  input: Pick<
-    Product,
-    | 'name'
-    | 'description'
-    | 'price'
-    | 'cost'
-    | 'optionGrid'
-    | 'images'
-    | 'provider'
-    | 'offShelfAt'
-  >
+  input: CreateProductInput
 }
 
 export type UpdateProductArgs = {
-  input: Pick<Product, 'id'> &
-    Partial<
-      Pick<
-        Product,
-        | 'name'
-        | 'description'
-        | 'price'
-        | 'cost'
-        | 'optionGrid'
-        | 'images'
-        | 'provider'
-        | 'offShelfAt'
-      >
-    >
+  input: UpdateProductInput
 }
 
 export type DeleteProductArgs = {
-  input: Pick<Product, 'id'>
+  input: DeleteProductInput
 }
 
 export type PublishProductArgs = {
-  input: Pick<Product, 'id'>
+  input: PublishProductInput
 }
+
+export type ResolverEventArguments =
+  | ListProductsArgs
+  | GetProductArgs
+  | CreateProductArgs
+  | UpdateProductArgs
+  | DeleteProductArgs
+  | PublishProductArgs
+
+export type ResolverResult = ProductConnection | Product

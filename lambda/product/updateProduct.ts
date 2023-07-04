@@ -1,62 +1,65 @@
 import { UpdateCommand } from '@aws-sdk/lib-dynamodb'
 import { NativeAttributeValue } from '@aws-sdk/util-dynamodb'
-import { isEmpty } from 'ramda'
+import { isEmpty, isNil } from 'ramda'
 
 import { ddbDocClient } from '../libs/ddbClient'
-import { Product, UpdateProductArgs } from './types'
+import { Product, UpdateProductInput } from './types'
 
-export default async function (args: UpdateProductArgs): Promise<Product> {
-  console.log('updateProduct', args)
+export default async function (input: UpdateProductInput): Promise<Product> {
+  console.log('updateProduct', input)
 
-  const expressions: string[] = []
-  const attributeValues: Record<string, NativeAttributeValue> = {}
+  // Set up some space to keep track of things we're updating
+  const expSet: Record<string, string> = {}
+  const expRemove: Record<string, string> = {}
+  const expNames: Record<string, string> = {}
+  const expValues: Record<string, NativeAttributeValue> = {}
 
-  if (args.input.name) {
-    expressions.push('name = :name')
-    attributeValues[':name'] = args.input.name
+  // Iterate through each argument, skipping keys.
+  // If the argument is set to "null" or "undefind", then remove that attribute from the item in DynamoDB.
+  // Otherwise set (or update) the attribute on the item in DynamoDB.
+  Object.entries(input).forEach(([key, value]) => {
+    if (key === 'id') return
+
+    if (isNil(value)) {
+      expRemove[`#${key}`] = `:${key}`
+      expNames[`#${key}`] = key
+    } else {
+      expSet[`#${key}`] = `:${key}`
+      expNames[`#${key}`] = key
+      expValues[`:${key}`] = value
+    }
+  })
+
+  // Start building the update expression, starting with attributes we're going to SET.
+  let expression = ''
+  if (!isEmpty(expSet)) {
+    expression += 'SET '
+    Object.entries(expSet).forEach(([key, value], index) => {
+      if (index == 0) expression += `${key} = ${value}`
+      else expression += `, ${key} = ${value}`
+    })
   }
 
-  if (args.input.description) {
-    expressions.push('description = :description')
-    attributeValues[':description'] = args.input.description
+  // Continue building the update expression, adding attributes we're going to REMOVE.
+  if (!isEmpty(expRemove)) {
+    expression += ' REMOVE '
+    Object.entries(expRemove).forEach(([key, value], index) => {
+      if (index == 0) expression += `${key} = ${value}`
+      else expression += `, ${key} = ${value}`
+    })
   }
 
-  if (args.input.price) {
-    expressions.push('price = :price')
-    attributeValues[':price'] = args.input.price
-  }
-
-  if (args.input.cost) {
-    expressions.push('cost = :cost')
-    attributeValues[':cost'] = args.input.cost
-  }
-
-  if (args.input.images) {
-    expressions.push('images = :images')
-    attributeValues[':images'] = args.input.images
-  }
-
-  if (args.input.provider) {
-    expressions.push('provider = :provider')
-    attributeValues[':provider'] = args.input.provider
-  }
-
-  if (args.input.offShelfAt) {
-    expressions.push('offShelfAt = :offShelfAt')
-    attributeValues[':offShelfAt'] = args.input.offShelfAt
-  }
-
+  // Finally, write the update expression into the command, along with any expressionNames and expressionValues.
   const command = new UpdateCommand({
     TableName: process.env.PRODUCT_TABLE_NAME,
-    Key: { id: args.input.id },
-    UpdateExpression: !isEmpty(expressions)
-      ? `set ${expressions.join(', ')}`
-      : undefined,
-    ExpressionAttributeValues: attributeValues,
+    Key: { id: input.id },
+    UpdateExpression: expression,
+    ExpressionAttributeNames: expNames,
+    ExpressionAttributeValues: expValues,
     ReturnValues: 'ALL_NEW',
   })
 
-  console.log('command', command)
+  console.log('command.input', command.input)
 
   const response = await ddbDocClient.send(command)
   if (!response.Attributes) throw new Error('Failed to update product.')
