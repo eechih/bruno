@@ -1,5 +1,5 @@
 import { AppSyncResolverEvent } from 'aws-lambda'
-import { handler, PublishProductArgs } from '../../../../lambda/product'
+import { handler, PublishProductArgs } from '../../../lambda/product'
 
 const eventJSON: AppSyncResolverEvent<PublishProductArgs> = {
   arguments: {

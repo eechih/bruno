@@ -1,7 +1,7 @@
 import 'aws-sdk-client-mock-jest'
 
-import { util } from '../../../../lambda/libs/utils'
-import { toUpdateCommand } from '../../../../lambda/product/util'
+import { util } from '../../utils'
+import { toUpdateCommand } from '../../utils/dynamodb-util'
 
 test('should convert to UpdateCommand', async () => {
   const tableName = 'mock'

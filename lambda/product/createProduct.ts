@@ -1,8 +1,8 @@
 import { PutCommand } from '@aws-sdk/lib-dynamodb'
 import { NativeAttributeValue } from '@aws-sdk/util-dynamodb'
 
-import { ddbDocClient } from '../libs/ddbClient'
-import { util } from '../libs/utils'
+import { ddbDocClient } from '../../libs/ddbClient'
+import { util } from '../../utils'
 import { CreateProductInput, Product } from './types'
 
 export default async function createProduct(

@@ -1,5 +1,6 @@
 import { isEmpty, isNil } from 'ramda'
 import { v4 as uuidv4 } from 'uuid'
+import { toUpdateCommand } from './dynamodb-util'
 
 const nowISO8601 = (): string => new Date().toISOString()
 const autoId = (): string => uuidv4()
@@ -16,6 +17,7 @@ export const util = {
   nonEmpty,
   base64Encode,
   base64Decode,
+  toUpdateCommand,
   time: {
     nowISO8601,
   },

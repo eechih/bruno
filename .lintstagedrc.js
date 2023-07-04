@@ -10,6 +10,9 @@ module.exports = {
     ]
   },
 
+  // Running Jest Tests
+  '**/*': () => 'pnpm test',
+
   // Prettify only Markdown and JSON files
   '**/*.(md|json)': filenames => `pnpm prettier --write ${filenames.join(' ')}`,
 }

@@ -1,6 +1,6 @@
 import { GetCommand } from '@aws-sdk/lib-dynamodb'
 
-import { ddbDocClient } from '../libs/ddbClient'
+import { ddbDocClient } from '../../libs/ddbClient'
 import { Product } from './types'
 
 export default async function getProduct(args: {

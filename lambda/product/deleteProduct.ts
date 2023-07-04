@@ -1,6 +1,6 @@
 import { DeleteCommand } from '@aws-sdk/lib-dynamodb'
 
-import { ddbDocClient } from '../libs/ddbClient'
+import { ddbDocClient } from '../../libs/ddbClient'
 import { DeleteProductInput, Product } from './types'
 
 export default async function deleteProduct(

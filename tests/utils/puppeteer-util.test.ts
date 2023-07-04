@@ -1,4 +1,4 @@
-import { createBrowser } from '../lambda/libs/utils/puppeteer-util'
+import { createBrowser } from '../../utils/puppeteer-util'
 
 import { FB_COOKIES } from './cookies'
 

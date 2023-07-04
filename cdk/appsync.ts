@@ -10,7 +10,7 @@ import * as s3 from 'aws-cdk-lib/aws-s3'
 import { Construct } from 'constructs'
 import { join } from 'path'
 
-import { toPascalCase } from '../lambda/libs/utils/string-util'
+import { toPascalCase } from '../utils/string-util'
 
 const appsyncDir = join(__dirname, '..', 'appsync')
 const resolversDir = join(appsyncDir, 'resolvers')
