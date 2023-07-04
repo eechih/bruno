@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib'
 import 'source-map-support/register'
-import { BrunoStack } from '../lib/bruno-stack'
+import { BrunoStack } from '../cdk/bruno-stack'
 
 const app = new cdk.App()
 new BrunoStack(app, `Bruno`, {
