@@ -11,7 +11,7 @@ export default async function updateProduct(
   const key = { id: input.id }
   const attributes = { ...input, updatedAt: util.time.nowISO8601() }
   const command = util.toUpdateCommand(tableName, key, attributes)
-  const response = await ddbDocClient.send(command)
-  if (!response.Attributes) throw new Error('Failed to update product.')
-  return response.Attributes as Product
+  const { Attributes: updated } = await ddbDocClient.send(command)
+  if (!updated) throw new Error('Failed to update product.')
+  return updated as Product
 }

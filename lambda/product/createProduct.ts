@@ -6,7 +6,8 @@ import { util } from '../../utils'
 import { CreateProductInput, Product } from './types'
 
 export default async function createProduct(
-  input: CreateProductInput
+  input: CreateProductInput,
+  owner: string
 ): Promise<Product> {
   console.log('createProduct', input)
 
@@ -14,14 +15,21 @@ export default async function createProduct(
     ...input,
     id: util.autoId(),
     createdAt: util.time.nowISO8601(),
-    owner: '',
+    owner: owner,
   }
 
   const command = new PutCommand({
     TableName: process.env.PRODUCT_TABLE_NAME,
     Item: newItem,
   })
-  const response = await ddbDocClient.send(command)
-  if (!response.Attributes) throw new Error('Failed to create product')
-  return response.Attributes as Product
+  try {
+    const response = await ddbDocClient.send(command)
+    console.log('response', response)
+    const { Attributes: created } = response
+    if (!created) throw new Error('Failed to create product')
+    return created as Product
+  } catch (error) {
+    console.log('Error', error)
+    throw error
+  }
 }

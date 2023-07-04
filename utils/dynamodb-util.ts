@@ -2,6 +2,16 @@ import { UpdateCommand } from '@aws-sdk/lib-dynamodb'
 import { NativeAttributeValue } from '@aws-sdk/util-dynamodb'
 import { isEmpty, isNil } from 'ramda'
 
+export function toExclusiveStartKey(nextToken: string): Record<string, any> {
+  const text = Buffer.from(nextToken, 'utf8').toString('base64')
+  return JSON.parse(text)
+}
+
+export function toNextToken(lastEvaluatedKey: Record<string, any>) {
+  const str = JSON.stringify(lastEvaluatedKey)
+  return Buffer.from(str, 'utf8').toString('base64')
+}
+
 export function toUpdateCommand(
   tableName: string,
   key: Record<string, NativeAttributeValue>,

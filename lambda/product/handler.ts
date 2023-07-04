@@ -1,4 +1,4 @@
-import { AppSyncResolverEvent } from 'aws-lambda'
+import { AppSyncIdentityCognito, AppSyncResolverEvent } from 'aws-lambda'
 
 import createProduct from './createProduct'
 import deleteProduct from './deleteProduct'
@@ -22,19 +22,19 @@ export const handler = async (
 ): Promise<ResolverResult> => {
   console.log('Received event {}', JSON.stringify(event, null, 3))
   console.log('Got an Invoke Request.')
-  const {
-    info: { fieldName },
-  } = event
+
+  const { fieldName } = event.info
+  const { sub: owner } = (event.identity ?? {}) as AppSyncIdentityCognito
 
   if (fieldName === 'listProducts') {
     const { limit, nextToken } = event.arguments as ListProductsArgs
-    return listProducts({ limit, nextToken })
+    return listProducts({ limit, nextToken, owner })
   } else if (fieldName === 'getProduct') {
     const { id } = event.arguments as GetProductArgs
     return getProduct({ id })
   } else if (fieldName === 'createProduct') {
     const { input } = event.arguments as CreateProductArgs
-    return createProduct(input)
+    return createProduct(input, owner)
   } else if (fieldName === 'updateProduct') {
     const { input } = event.arguments as UpdateProductArgs
     return updateProduct(input)
