@@ -2,11 +2,11 @@ import * as cdk from 'aws-cdk-lib'
 import * as cognito from 'aws-cdk-lib/aws-cognito'
 import * as s3 from 'aws-cdk-lib/aws-s3'
 import { Construct } from 'constructs'
+
 import AppSync from './appsync'
 import Buyplus1 from './buyplus1'
 import CognitoAuthRole from './cognito-auth-role'
 import CognitoUnuthRole from './cognito-unauth-role'
-import { createGenericDataPointTable } from './dynamodb'
 import LambdaLayer from './lambda-layer'
 import Product from './product'
 // import WafConfig from './waf-config'
@@ -194,8 +194,6 @@ export class BrunoStack extends cdk.Stack {
 
     const { chromium } = new LambdaLayer(this, 'LambdaLayer')
 
-    const dataPointTable = createGenericDataPointTable(this)
-
     const product = new Product(this, 'Product')
 
     const buyplus1 = new Buyplus1(this, 'Buyplus1', {
@@ -207,11 +205,7 @@ export class BrunoStack extends cdk.Stack {
       domain,
       subdomain: 'brunoapi',
       userPool,
-      productTable: product.table,
       productHandler: product.handler,
-      dataPointTable,
-      chromiumLayer: chromium,
-      bucket: bucket,
       buyplus1Handler: buyplus1.handler,
     })
 
