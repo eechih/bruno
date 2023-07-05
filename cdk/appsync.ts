@@ -26,6 +26,7 @@ type AppSyncProps = {
   chromiumLayer: lambda.ILayerVersion
   bucket: s3.IBucket
   productHandler: lambda.IFunction
+  buyplus1Handler: lambda.IFunction
 }
 
 function createResolver(
@@ -151,17 +152,21 @@ export default class AppSync extends Construct {
       }
     `)
 
-    const productDS = this.graphqlApi.addLambdaDataSource(
-      'productLambdaDataSource',
-      this.productHandler
+    const productLambdaSource = this.graphqlApi.addLambdaDataSource(
+      'ProductLambdaSource',
+      props.productHandler
     )
+    createResolver(productLambdaSource, 'Query', 'getProduct')
+    createResolver(productLambdaSource, 'Query', 'listProducts')
+    createResolver(productLambdaSource, 'Mutation', 'createProduct')
+    createResolver(productLambdaSource, 'Mutation', 'updateProduct')
+    createResolver(productLambdaSource, 'Mutation', 'deleteProduct')
 
-    createResolver(productDS, 'Query', 'getProduct')
-    createResolver(productDS, 'Query', 'listProducts')
-    createResolver(productDS, 'Mutation', 'createProduct')
-    createResolver(productDS, 'Mutation', 'updateProduct')
-    createResolver(productDS, 'Mutation', 'deleteProduct')
-    createResolver(productDS, 'Mutation', 'publishProduct')
+    const buyplus1LambdaSource = this.graphqlApi.addLambdaDataSource(
+      'Buyplus1LambdaSource',
+      props.buyplus1Handler
+    )
+    createResolver(buyplus1LambdaSource, 'Mutation', 'publishProduct')
 
     // Mutations:
     // this._createResolver_Mutation_createProduct()
