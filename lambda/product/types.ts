@@ -72,13 +72,3 @@ export type DeleteProductArgs = {
 export type PublishProductArgs = {
   input: PublishProductInput
 }
-
-export type ResolverEventArguments =
-  | ListProductsArgs
-  | GetProductArgs
-  | CreateProductArgs
-  | UpdateProductArgs
-  | DeleteProductArgs
-  | PublishProductArgs
-
-export type ResolverResult = ProductConnection | Product

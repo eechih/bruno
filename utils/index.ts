@@ -10,6 +10,14 @@ const base64Encode = (text: string): string =>
   Buffer.from(text, 'utf8').toString('base64')
 const base64Decode = (encoded: string): string =>
   Buffer.from(encoded, 'base64').toString('utf8')
+const nullIfEmpty = <T>(value: T): T | null => {
+  if (isEmpty(value)) return null
+  return value
+}
+const undefinedIfEmpty = <T>(value: T): T | undefined => {
+  if (isEmpty(value)) return undefined
+  return value
+}
 
 export const util = {
   autoId,
@@ -18,6 +26,8 @@ export const util = {
   base64Encode,
   base64Decode,
   toUpdateCommand,
+  nullIfEmpty,
+  undefinedIfEmpty,
   time: {
     nowISO8601,
   },

@@ -74,6 +74,7 @@ type Product @aws_api_key @aws_cognito_user_pools {
 
 type ProductConnection {
   items: [Product]
+  scannedCount: Int
   nextToken: String
 }
 

@@ -6,3 +6,8 @@ module.exports = {
     '^.+\\.tsx?$': 'ts-jest',
   },
 }
+
+process.env = Object.assign(process.env, {
+  AWS_REGION: 'mock',
+  PRODUCT_TABLE_NAME: 'mock',
+})
