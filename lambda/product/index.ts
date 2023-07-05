@@ -64,6 +64,7 @@ export async function listProducts(
     index: 'byOwner',
     limit: args.limit,
     nextToken: args.nextToken,
+    scanIndexForward: false,
   })
   return connection
 }

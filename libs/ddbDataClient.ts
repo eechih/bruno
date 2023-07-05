@@ -46,9 +46,9 @@ export interface QueryParams {
   index?: string
   nextToken?: string
   limit?: number
-  scanIndexForward?: boolean
-  consistentRead?: boolean
-  select?: string
+  scanIndexForward?: boolean // default true
+  consistentRead?: boolean // default false
+  select?: string // default 'ALL_ATTRIBUTES'
 }
 
 export default class DynamoDBDataClient {
