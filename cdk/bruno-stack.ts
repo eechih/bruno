@@ -199,6 +199,7 @@ export class BrunoStack extends cdk.Stack {
     const buyplus1 = new Buyplus1(this, 'Buyplus1', {
       layers: [chromium],
       productTable: product.table,
+      bucket: bucket,
     })
 
     const appsync = new AppSync(this, 'AppSync', {
