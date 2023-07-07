@@ -6,7 +6,8 @@ import moment from 'moment'
 
 import { isEmpty, isNil } from 'ramda'
 import { util } from '../../utils'
-import { BP1Product, Cookie, CreateBP1ProductInput } from './types'
+import { Cookie } from '../cookie/types'
+import { BP1Product, CreateBP1ProductInput } from './types'
 
 export const endpoint =
   'https://s18.buyplus1.com.tw/b/1301023989915468/admin/index.php'
@@ -14,19 +15,19 @@ export const endpoint =
 const userAgent =
   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36'
 
-export const createAxiosInstance = (params: { cookie: Cookie }): Axios => {
+export const createAxiosInstance = (params: { cookies: Cookie[] }): Axios => {
   return axios.create({
     baseURL: endpoint,
     headers: {
       'User-Agent': userAgent,
-      Cookie: toCookieInHeaders(params.cookie),
+      Cookie: toCookieInHeaders(params.cookies),
     },
     withCredentials: true,
   })
 }
 
-export const toCookieInHeaders = (cookie: Cookie): string => {
-  return cookie.map(({ name, value }) => `${name}=${value}`).join('; ')
+export const toCookieInHeaders = (cookies: Cookie[]): string => {
+  return cookies.map(cookie => `${cookie.name}=${cookie.value}`).join('; ')
 }
 
 export const getBuyplus1Token = async (
@@ -102,7 +103,7 @@ export const updateBP1Product = async (props: {
     name,
     price,
     cost = 0,
-    description = '',
+    fbMessage = '',
     status = 1,
     statusDate,
     location = '',
@@ -116,10 +117,7 @@ export const updateBP1Product = async (props: {
     const dateModified = $('input[type="hidden"][name="date_modified"]').val()
 
     const replacedName = name.replace('{{product-id}}', `S1-${id}`)
-    const updatedDescription = description?.replace(
-      '{{product-id}}',
-      `S1-${id}`
-    )
+    const description = fbMessage?.replace('{{product-id}}', `S1-${id}`)
     const form = new FormData()
     form.append('product_id', id)
     form.append('microtime', microtime ?? '')
@@ -130,7 +128,7 @@ export const updateBP1Product = async (props: {
     form.append('quantity', 0)
     form.append('status', status)
     form.append('image', '')
-    form.append('product_description[1][description]', updatedDescription)
+    form.append('product_description[1][description]', description)
     form.append('fb_groups_id', '913862951959460')
     form.append(
       'product_status_date',

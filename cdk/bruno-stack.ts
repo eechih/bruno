@@ -4,9 +4,11 @@ import * as s3 from 'aws-cdk-lib/aws-s3'
 import { Construct } from 'constructs'
 
 import AppSync from './appsync'
+import Automator from './automator'
 import Buyplus1 from './buyplus1'
 import CognitoAuthRole from './cognito-auth-role'
 import CognitoUnuthRole from './cognito-unauth-role'
+import Cookie from './cookie'
 import LambdaLayer from './lambda-layer'
 import Product from './product'
 // import WafConfig from './waf-config'
@@ -196,6 +198,15 @@ export class BrunoStack extends cdk.Stack {
 
     const product = new Product(this, 'Product')
 
+    const cookie = new Cookie(this, 'Cookie')
+
+    const automator = new Automator(this, 'Automator', {
+      layers: [chromium],
+      productTable: product.table,
+      cookieTable: cookie.table,
+      bucket: bucket,
+    })
+
     const buyplus1 = new Buyplus1(this, 'Buyplus1', {
       layers: [chromium],
       productTable: product.table,
@@ -207,6 +218,8 @@ export class BrunoStack extends cdk.Stack {
       subdomain: 'brunoapi',
       userPool,
       productHandler: product.handler,
+      cookieHandler: cookie.handler,
+      automatorHandler: automator.handler,
       buyplus1Handler: buyplus1.handler,
     })
 

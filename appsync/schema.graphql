@@ -3,6 +3,9 @@ type Mutation {
   updateProduct(input: UpdateProductInput!): Product
   deleteProduct(input: DeleteProductInput!): Product
   publishProduct(input: PublishProductInput!): Product
+  createCookie(input: CreateCookieInput!): Cookie
+  updateCookie(input: UpdateCookieInput!): Cookie
+  deleteCookie(input: DeleteCookieInput!): Cookie
 }
 
 type Query {
@@ -12,6 +15,8 @@ type Query {
     limit: Int
     nextToken: String
   ): ProductConnection
+  getCookie(id: ID!): Cookie
+  listCookies(limit: Int, nextToken: String): CookieConnection
 }
 
 type Product @aws_api_key @aws_cognito_user_pools {
@@ -127,4 +132,49 @@ input TableStringFilterInput {
   notContains: String
   between: [String]
   beginsWith: String
+}
+
+type Cookie {
+  id: ID!
+  name: String!
+  value: String!
+  path: String
+  domain: String
+  expires: Int
+  samSite: String
+  secure: Boolean
+  createdAt: AWSDateTime
+  updatedAt: AWSDateTime
+  owner: String!
+}
+
+type CookieConnection {
+  items: [Cookie]
+  scannedCount: Int
+  nextToken: String
+}
+
+input CreateCookieInput {
+  name: String!
+  value: String!
+  path: String
+  domain: String
+  expires: Int
+  samSite: String
+  secure: Boolean
+}
+
+input UpdateCookieInput {
+  id: ID!
+  name: String
+  value: String
+  path: String
+  domain: String
+  expires: Int
+  samSite: String
+  secure: Boolean
+}
+
+input DeleteCookieInput {
+  id: ID!
 }

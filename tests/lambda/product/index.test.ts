@@ -5,7 +5,7 @@ import 'aws-sdk-client-mock-jest'
 
 import { updateProduct } from '../../../lambda/product'
 import {
-  PublishProductArgs,
+  DeleteProductArgs,
   UpdateProductInput,
 } from '../../../lambda/product/types'
 
@@ -15,7 +15,7 @@ beforeEach(() => {
   ddbMock.reset()
 })
 
-const eventJSON: AppSyncResolverEvent<PublishProductArgs> = {
+const eventJSON: AppSyncResolverEvent<DeleteProductArgs> = {
   arguments: {
     input: {
       id: '111',

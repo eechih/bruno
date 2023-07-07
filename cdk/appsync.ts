@@ -15,14 +15,16 @@ type AppSyncProps = {
   domain: string
   subdomain: string
   userPool: cognito.IUserPool
+  cookieHandler: lambda.IFunction
+  automatorHandler: lambda.IFunction
   productHandler: lambda.IFunction
   buyplus1Handler: lambda.IFunction
 }
 
 function createResolver(
-  lambdaSource: appsync.LambdaDataSource,
   typeName: 'Mutation' | 'Query',
-  fieldName: string
+  fieldName: string,
+  lambdaSource: appsync.LambdaDataSource
 ): appsync.Resolver {
   const id = toPascalCase(fieldName + 'Resolver')
   return lambdaSource.createResolver(id, {
@@ -103,21 +105,35 @@ export default class AppSync extends Construct {
     this.graphqlCustomEndpoint = `https://${domainName}/graphql`
 
     // 3. Set up datasources
-    const productLambdaSource = this.graphqlApi.addLambdaDataSource(
-      'ProductLambdaSource',
-      props.productHandler
-    )
     const buyplus1LambdaSource = this.graphqlApi.addLambdaDataSource(
       'Buyplus1LambdaSource',
       props.buyplus1Handler
     )
+    const productLambdaSource = this.graphqlApi.addLambdaDataSource(
+      'ProductLambdaSource',
+      props.productHandler
+    )
+    const cookieLambdaSource = this.graphqlApi.addLambdaDataSource(
+      'CookieLambdaSource',
+      props.cookieHandler
+    )
+    const automatorLambdaSource = this.graphqlApi.addLambdaDataSource(
+      'AutomatorLambdaSource',
+      props.automatorHandler
+    )
 
     // 4. Define resolvers
-    createResolver(productLambdaSource, 'Query', 'getProduct')
-    createResolver(productLambdaSource, 'Query', 'listProducts')
-    createResolver(productLambdaSource, 'Mutation', 'createProduct')
-    createResolver(productLambdaSource, 'Mutation', 'updateProduct')
-    createResolver(productLambdaSource, 'Mutation', 'deleteProduct')
-    createResolver(buyplus1LambdaSource, 'Mutation', 'publishProduct')
+    createResolver('Mutation', 'createProduct', productLambdaSource)
+    createResolver('Mutation', 'updateProduct', productLambdaSource)
+    createResolver('Mutation', 'deleteProduct', productLambdaSource)
+    createResolver('Mutation', 'publishProduct', buyplus1LambdaSource)
+    createResolver('Mutation', 'createCookie', cookieLambdaSource)
+    createResolver('Mutation', 'updateCookie', cookieLambdaSource)
+    createResolver('Mutation', 'deleteCookie', cookieLambdaSource)
+
+    createResolver('Query', 'getProduct', productLambdaSource)
+    createResolver('Query', 'listProducts', productLambdaSource)
+    createResolver('Query', 'getCookie', cookieLambdaSource)
+    createResolver('Query', 'listCookies', cookieLambdaSource)
   }
 }

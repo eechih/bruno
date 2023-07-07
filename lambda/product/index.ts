@@ -12,10 +12,9 @@ import {
   UpdateProductArgs,
 } from './types'
 
-const productDataClient = new DynamoDBDataClient({
-  region: process.env.AWS_REGION!,
-  tableName: process.env.PRODUCT_TABLE_NAME!,
-})
+const region = process.env.AWS_REGION!
+const tableName = process.env.PRODUCT_TABLE_NAME!
+const dataClient = new DynamoDBDataClient({ region, tableName })
 
 export const handler = async (
   event: AppSyncResolverEvent<
@@ -55,7 +54,7 @@ export async function listProducts(
   owner: string
 ): Promise<ProductConnection> {
   console.log('listProducts', args)
-  const connection = await productDataClient.query<Product>({
+  const connection = await dataClient.query<Product>({
     query: {
       expression: '#owner = :owner',
       expressionNames: { '#owner': 'owner' },
@@ -74,7 +73,7 @@ export async function getProduct(
   owner: string
 ): Promise<Product> {
   console.log('getProduct', args)
-  const product = await productDataClient.getItem<Product>({
+  const product = await dataClient.getItem<Product>({
     key: { id: args.id },
   })
   if (!product) throw new Error('Product not found')
@@ -87,7 +86,7 @@ export async function createProduct(
 ): Promise<Product> {
   console.log('createProduct', args)
   const { input } = args
-  const created = await productDataClient.putItem<Product>({
+  const created = await dataClient.putItem<Product>({
     key: { id: util.autoId() },
     attributeValues: {
       ...input,
@@ -105,7 +104,7 @@ export async function updateProduct(
 ): Promise<Product> {
   console.log('updateProduct', args)
   const { input } = args
-  const updated = await productDataClient.updateItem<Product>({
+  const updated = await dataClient.updateItem<Product>({
     key: { id: input.id },
     attributeValues: {
       ...input,
@@ -122,7 +121,7 @@ export async function deleteProduct(
 ): Promise<Product> {
   console.log('deleteProduct', args)
   const { input } = args
-  const deleted = await productDataClient.deleteItem<Product>({
+  const deleted = await dataClient.deleteItem<Product>({
     key: { id: input.id },
   })
   if (!deleted) throw new Error('Failed to delete product')

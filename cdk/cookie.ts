@@ -1,32 +1,16 @@
 import * as cdk from 'aws-cdk-lib'
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 import * as lambda from 'aws-cdk-lib/aws-lambda'
-import * as sources from 'aws-cdk-lib/aws-lambda-event-sources'
 import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs'
-import * as sqs from 'aws-cdk-lib/aws-sqs'
 import { Construct } from 'constructs'
 import { join } from 'path'
 
-export default class Product extends Construct {
-  public readonly dlqueue: sqs.Queue
-  public readonly queue: sqs.Queue
+export default class Cookie extends Construct {
   public readonly table: dynamodb.Table
   public readonly handler: lambda.IFunction
 
   constructor(scope: Construct, id: string) {
     super(scope, id)
-
-    this.dlqueue = new sqs.Queue(this, 'DLQueue', {
-      retentionPeriod: cdk.Duration.days(14),
-    })
-
-    this.queue = new sqs.Queue(this, 'Queue', {
-      visibilityTimeout: cdk.Duration.seconds(60),
-      deadLetterQueue: {
-        maxReceiveCount: 1,
-        queue: this.dlqueue,
-      },
-    })
 
     this.table = new dynamodb.Table(this, 'Table', {
       partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
@@ -43,7 +27,7 @@ export default class Product extends Construct {
 
     this.handler = new nodejs.NodejsFunction(this, 'Handler', {
       runtime: lambda.Runtime.NODEJS_16_X,
-      entry: join(lambdaDir, 'product', 'index.ts'),
+      entry: join(lambdaDir, 'cookie', 'index.ts'),
       depsLockFilePath: join(__dirname, '..', 'pnpm-lock.yaml'),
       bundling: {
         externalModules: [
@@ -51,20 +35,12 @@ export default class Product extends Construct {
         ],
       },
       environment: {
-        PRODUCT_TABLE_NAME: this.table.tableName,
-        PRODUCT_QUEUE_URL: this.queue.queueUrl,
-        PRODUCT_DLQUEUE_URL: this.dlqueue.queueUrl,
+        COOKIE_TABLE_NAME: this.table.tableName,
       },
     })
 
     // 👇 grant some permissions for the lambda role
     this.table.grantReadWriteData(this.handler)
-    this.queue.grantSendMessages(this.handler)
-    this.dlqueue.grantSendMessages(this.handler)
-
-    this.handler.addEventSource(
-      new sources.SqsEventSource(this.queue, { batchSize: 1 })
-    )
 
     new cdk.CfnOutput(this, 'TableName', {
       value: this.table.tableName,

@@ -1,12 +1,12 @@
 import { AppSyncIdentityCognito, AppSyncResolverEvent } from 'aws-lambda'
-import { isEmpty, isNil } from 'ramda'
 
-import DynamoDBDataClient from '../../libs/ddbDataClient'
 import S3Client from '../../libs/S3Client'
+import DynamoDBDataClient from '../../libs/ddbDataClient'
+import { Cookie } from '../cookie/types'
+import { Product } from '../product/types'
 import {
-  Cookie,
   CreateBP1ProductInput,
-  Product,
+  PostToFBArgs,
   PublishProductArgs,
 } from './types'
 import * as util from './util'
@@ -30,11 +30,28 @@ export const handler = async (
 
   const { sub: owner } = identity
 
+  // postInFB (axios, fbGroupId, name, price, description, options, statusDate, images)
+  // importInBuyPlus1 (axios, token, fbGroupId, fbPostId, name, price, options, images)
   if (fieldName === 'publishProduct') {
     return publishProduct(event.arguments as PublishProductArgs, owner)
   } else {
     throw new Error('Unknown field, unable to resolve' + fieldName)
   }
+}
+
+export async function postToFB(
+  args: PostToFBArgs,
+  owner: string
+): Promise<string> {
+  const { fbGroupId, productId } = args
+  const product = await productDataClient.getItem<Product>({
+    key: { id: productId },
+  })
+  if (!product) {
+    throw new Error('Product not found')
+  }
+
+  return ''
 }
 
 export async function publishProduct(
@@ -51,15 +68,9 @@ export async function publishProduct(
     throw new Error('Product not found')
   }
 
-  const objKey = 'private/cookie/facebook/100000236390565.json'
-  const objData = await s3Client.getObject({ key: objKey })
-  const cookie = JSON.parse(objData) as Cookie
-  if (isNil(cookie) || isEmpty(cookie)) {
-    throw new Error(`Failed to download buyplus1 cookie from S3 ${objKey}`)
-  }
-  console.log('cookie', cookie)
+  const cookies: Cookie[] = []
 
-  const axios = util.createAxiosInstance({ cookie })
+  const axios = util.createAxiosInstance({ cookies })
 
   const token = await util.getBuyplus1Token(axios)
   if (!token) {
@@ -70,7 +81,7 @@ export async function publishProduct(
   const createBP1ProductInput: CreateBP1ProductInput = {
     name: 'test2 by harry',
     price: 999,
-    description: 'test test test',
+    fbMessage: 'test test test',
     fbGroupId: '384011198690249',
   }
 
