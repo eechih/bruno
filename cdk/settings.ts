@@ -5,7 +5,7 @@ import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs'
 import { Construct } from 'constructs'
 import { join } from 'path'
 
-export default class Cookie extends Construct {
+export default class Settings extends Construct {
   public readonly table: dynamodb.Table
   public readonly handler: lambda.IFunction
 
@@ -13,21 +13,15 @@ export default class Cookie extends Construct {
     super(scope, id)
 
     this.table = new dynamodb.Table(this, 'Table', {
-      partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-    })
-
-    this.table.addGlobalSecondaryIndex({
-      indexName: 'byOwner',
       partitionKey: { name: 'owner', type: dynamodb.AttributeType.STRING },
-      sortKey: { name: 'createdAt', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
     })
 
     const lambdaDir = join(__dirname, '..', 'lambda')
 
     this.handler = new nodejs.NodejsFunction(this, 'Handler', {
       runtime: lambda.Runtime.NODEJS_16_X,
-      entry: join(lambdaDir, 'cookie', 'index.ts'),
+      entry: join(lambdaDir, 'settings', 'index.ts'),
       depsLockFilePath: join(__dirname, '..', 'pnpm-lock.yaml'),
       bundling: {
         externalModules: [
@@ -35,7 +29,7 @@ export default class Cookie extends Construct {
         ],
       },
       environment: {
-        COOKIE_TABLE_NAME: this.table.tableName,
+        SETTINGS_TABLE_NAME: this.table.tableName,
       },
     })
 

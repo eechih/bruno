@@ -15,10 +15,9 @@ type AppSyncProps = {
   domain: string
   subdomain: string
   userPool: cognito.IUserPool
-  cookieHandler: lambda.IFunction
   automatorHandler: lambda.IFunction
   productHandler: lambda.IFunction
-  buyplus1Handler: lambda.IFunction
+  settingsHandler: lambda.IFunction
 }
 
 function createResolver(
@@ -105,35 +104,28 @@ export default class AppSync extends Construct {
     this.graphqlCustomEndpoint = `https://${domainName}/graphql`
 
     // 3. Set up datasources
-    const buyplus1LambdaSource = this.graphqlApi.addLambdaDataSource(
-      'Buyplus1LambdaSource',
-      props.buyplus1Handler
-    )
     const productLambdaSource = this.graphqlApi.addLambdaDataSource(
       'ProductLambdaSource',
       props.productHandler
-    )
-    const cookieLambdaSource = this.graphqlApi.addLambdaDataSource(
-      'CookieLambdaSource',
-      props.cookieHandler
     )
     const automatorLambdaSource = this.graphqlApi.addLambdaDataSource(
       'AutomatorLambdaSource',
       props.automatorHandler
     )
+    const settingsLambdaSource = this.graphqlApi.addLambdaDataSource(
+      'SettingsLambdaSource',
+      props.settingsHandler
+    )
 
     // 4. Define resolvers
+    createResolver('Mutation', 'updateFBCookie', settingsLambdaSource)
+    createResolver('Mutation', 'updateBP1Cookie', settingsLambdaSource)
     createResolver('Mutation', 'createProduct', productLambdaSource)
     createResolver('Mutation', 'updateProduct', productLambdaSource)
     createResolver('Mutation', 'deleteProduct', productLambdaSource)
-    createResolver('Mutation', 'publishProduct', buyplus1LambdaSource)
-    createResolver('Mutation', 'createCookie', cookieLambdaSource)
-    createResolver('Mutation', 'updateCookie', cookieLambdaSource)
-    createResolver('Mutation', 'deleteCookie', cookieLambdaSource)
 
+    createResolver('Query', 'getSettings', settingsLambdaSource)
     createResolver('Query', 'getProduct', productLambdaSource)
     createResolver('Query', 'listProducts', productLambdaSource)
-    createResolver('Query', 'getCookie', cookieLambdaSource)
-    createResolver('Query', 'listCookies', cookieLambdaSource)
   }
 }

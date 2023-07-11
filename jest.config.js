@@ -8,7 +8,8 @@ module.exports = {
 }
 
 process.env = Object.assign(process.env, {
-  AWS_REGION: 'mock',
-  PRODUCT_TABLE_NAME: 'mock',
-  BUCKET_NAME: 'mock',
+  AWS_REGION: 'mock_region',
+  BUCKET_NAME: 'mock_bucket_name',
+  SETTINGS_TABLE_NAME: 'mock_settings_table_name',
+  PRODUCT_TABLE_NAME: 'mock_product_table_name',
 })

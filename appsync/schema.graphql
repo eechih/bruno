@@ -1,22 +1,20 @@
 type Mutation {
+  updateFBCookie(input: UpdateFBCookieInput!): FBCookie
+  updateBP1Cookie(input: UpdateBP1CookieInput!): BP1Cookie
   createProduct(input: CreateProductInput!): Product
   updateProduct(input: UpdateProductInput!): Product
   deleteProduct(input: DeleteProductInput!): Product
   publishProduct(input: PublishProductInput!): Product
-  createCookie(input: CreateCookieInput!): Cookie
-  updateCookie(input: UpdateCookieInput!): Cookie
-  deleteCookie(input: DeleteCookieInput!): Cookie
 }
 
 type Query {
+  getSettings: Settings
   getProduct(id: ID!): Product @aws_api_key @aws_cognito_user_pools
   listProducts(
     filter: TableProductFilterInput
     limit: Int
     nextToken: String
   ): ProductConnection
-  getCookie(id: ID!): Cookie
-  listCookies(limit: Int, nextToken: String): CookieConnection
 }
 
 type Product @aws_api_key @aws_cognito_user_pools {
@@ -25,14 +23,19 @@ type Product @aws_api_key @aws_cognito_user_pools {
   description: String
   price: Int
   cost: Int
-  optionGrid: [String]
+  options: [[String]]
   images: [String]
   provider: String
   offShelfAt: AWSDateTime
-  publishAt: AWSDateTime
+  fbMessage: String
+  fbGroupId: String
+  fbPostId: String
+  fbPostedAt: AWSDateTime
+  bp1ProductId: String
+  bp1CreatedAt: AWSDateTime
   createdAt: AWSDateTime
   updatedAt: AWSDateTime
-  owner: String
+  owner: String!
 }
 
 type ProductConnection {
@@ -42,15 +45,16 @@ type ProductConnection {
 }
 
 input CreateProductInput {
-  name: String!
+  name: String
   description: String
-  price: Int!
+  price: Int
   cost: Int
-  optionGrid: [String]
+  options: [[String]]
   images: [String]
   provider: String
   offShelfAt: AWSDateTime
-  publishAt: AWSDateTime
+  fbMessage: String
+  fbGroupId: String
 }
 
 input UpdateProductInput {
@@ -59,11 +63,12 @@ input UpdateProductInput {
   description: String
   price: Int
   cost: Int
-  optionGrid: [String]
+  options: [[String]]
   images: [String]
   provider: String
   offShelfAt: AWSDateTime
-  publishAt: AWSDateTime
+  fbMessage: String
+  fbGroupId: String
 }
 
 input DeleteProductInput {
@@ -134,47 +139,46 @@ input TableStringFilterInput {
   beginsWith: String
 }
 
-type Cookie {
-  id: ID!
+type Settings {
+  owner: ID!
+  profile: Profile
+  fbCookie: FBCookie
+  bp1Cookie: BP1Cookie
+  createdAt: AWSDateTime!
+}
+
+type Profile {
   name: String!
-  value: String!
-  path: String
-  domain: String
-  expires: Int
-  samSite: String
-  secure: Boolean
-  createdAt: AWSDateTime
-  updatedAt: AWSDateTime
-  owner: String!
 }
 
-type CookieConnection {
-  items: [Cookie]
-  scannedCount: Int
-  nextToken: String
+type FBCookie {
+  fr: String
+  xs: String
+  datr: String
+  c_user: String
+  wd: String
+  sb: String
+  updatedAt: String!
 }
 
-input CreateCookieInput {
-  name: String!
-  value: String!
-  path: String
-  domain: String
-  expires: Int
-  samSite: String
-  secure: Boolean
+type BP1Cookie {
+  currency: String
+  __cf_bm: String
+  __Secure_PHPSESSID: String
+  updatedAt: String!
 }
 
-input UpdateCookieInput {
-  id: ID!
-  name: String
-  value: String
-  path: String
-  domain: String
-  expires: Int
-  samSite: String
-  secure: Boolean
+input UpdateFBCookieInput {
+  fr: String
+  xs: String
+  datr: String
+  c_user: String
+  wd: String
+  sb: String
 }
 
-input DeleteCookieInput {
-  id: ID!
+input UpdateBP1CookieInput {
+  currency: String
+  __cf_bm: String
+  __Secure_PHPSESSID: String
 }

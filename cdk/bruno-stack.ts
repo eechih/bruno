@@ -5,12 +5,11 @@ import { Construct } from 'constructs'
 
 import AppSync from './appsync'
 import Automator from './automator'
-import Buyplus1 from './buyplus1'
 import CognitoAuthRole from './cognito-auth-role'
 import CognitoUnuthRole from './cognito-unauth-role'
-import Cookie from './cookie'
 import LambdaLayer from './lambda-layer'
 import Product from './product'
+import Settings from './settings'
 // import WafConfig from './waf-config'
 
 interface BrunoStackProps extends cdk.StackProps {
@@ -198,17 +197,11 @@ export class BrunoStack extends cdk.Stack {
 
     const product = new Product(this, 'Product')
 
-    const cookie = new Cookie(this, 'Cookie')
+    const settings = new Settings(this, 'Settings')
 
     const automator = new Automator(this, 'Automator', {
       layers: [chromium],
-      productTable: product.table,
-      cookieTable: cookie.table,
-      bucket: bucket,
-    })
-
-    const buyplus1 = new Buyplus1(this, 'Buyplus1', {
-      layers: [chromium],
+      settingsTable: settings.table,
       productTable: product.table,
       bucket: bucket,
     })
@@ -218,9 +211,8 @@ export class BrunoStack extends cdk.Stack {
       subdomain: 'brunoapi',
       userPool,
       productHandler: product.handler,
-      cookieHandler: cookie.handler,
       automatorHandler: automator.handler,
-      buyplus1Handler: buyplus1.handler,
+      settingsHandler: settings.handler,
     })
 
     new cdk.CfnOutput(this, 'GraphqlCustomEndpoint', {

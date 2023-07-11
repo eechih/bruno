@@ -2,21 +2,25 @@ import { AppSyncIdentityCognito, AppSyncResolverEvent } from 'aws-lambda'
 
 import S3Client from '../../libs/S3Client'
 import DynamoDBDataClient from '../../libs/ddbDataClient'
-import { Cookie } from '../cookie/types'
 import { Product } from '../product/types'
-import {
-  CreateBP1ProductInput,
-  PostToFBArgs,
-  PublishProductArgs,
-} from './types'
-import * as util from './util'
+import { Settings } from '../settings/types'
+import { Buyplus1 } from './buyplus1'
+import { PostToFBArgs, PublishProductArgs } from './types'
 
 const region = process.env.AWS_REGION!
-const tableName = process.env.PRODUCT_TABLE_NAME!
 const bucketName = process.env.BUCKET_NAME!
+const settingsTableName = process.env.SETTINGS_TABLE_NAME!
+const productTableName = process.env.PRODUCT_TABLE_NAME!
 
-const productDataClient = new DynamoDBDataClient({ region, tableName })
-const s3Client = new S3Client({ region, bucketName })
+export const s3Client = new S3Client({ region, bucketName })
+const settingsDataClient = new DynamoDBDataClient({
+  region,
+  tableName: settingsTableName,
+})
+const productDataClient = new DynamoDBDataClient({
+  region,
+  tableName: productTableName,
+})
 
 export const handler = async (
   event: AppSyncResolverEvent<PublishProductArgs>
@@ -30,8 +34,6 @@ export const handler = async (
 
   const { sub: owner } = identity
 
-  // postInFB (axios, fbGroupId, name, price, description, options, statusDate, images)
-  // importInBuyPlus1 (axios, token, fbGroupId, fbPostId, name, price, options, images)
   if (fieldName === 'publishProduct') {
     return publishProduct(event.arguments as PublishProductArgs, owner)
   } else {
@@ -67,46 +69,21 @@ export async function publishProduct(
   if (!product) {
     throw new Error('Product not found')
   }
+  console.log('product', product)
 
-  const cookies: Cookie[] = []
-
-  const axios = util.createAxiosInstance({ cookies })
-
-  const token = await util.getBuyplus1Token(axios)
-  if (!token) {
-    throw new Error(`Failed to get buyplus1's token`)
-  }
-  console.log('token', token)
-
-  const createBP1ProductInput: CreateBP1ProductInput = {
-    name: 'test2 by harry',
-    price: 999,
-    fbMessage: 'test test test',
-    fbGroupId: '384011198690249',
+  const settings = await settingsDataClient.getItem<Settings>({
+    key: { owner: owner },
+  })
+  if (!settings) {
+    throw new Error('Settings not found')
   }
 
-  const createdProduct = await util.createBP1Product({
-    axios,
-    token,
-    input: createBP1ProductInput,
-  })
+  const imageUrl = await s3Client.getPresignedUrl({ key: 'test' })
+  console.log('imageUrl', imageUrl)
 
-  console.log('Created product', createdProduct)
+  const bp1 = new Buyplus1(settings.fbCookie, settings.bp1Cookie)
 
-  const updatedProduct = await util.updateBP1Product({
-    axios,
-    token,
-    product: createdProduct,
-  })
-
-  console.log('Updated product', updatedProduct)
-
-  const postedProduct = await util.postInFBGroup({
-    axios,
-    token,
-    product: updatedProduct,
-  })
-  console.log('Posted porduct', postedProduct)
+  await bp1.publish(product)
 
   return product
 }

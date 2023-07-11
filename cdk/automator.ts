@@ -8,9 +8,9 @@ import { join } from 'path'
 
 interface AutomatorProps {
   layers: lambda.LayerVersion[]
-  cookieTable: dynamodb.ITable
-  productTable: dynamodb.ITable
   bucket: s3.IBucket
+  settingsTable: dynamodb.ITable
+  productTable: dynamodb.ITable
 }
 
 export default class Automator extends Construct {
@@ -31,9 +31,9 @@ export default class Automator extends Construct {
         ],
       },
       environment: {
-        COOKIE_TABLE_NAME: props.cookieTable.tableName,
-        PRODUCT_TABLE_NAME: props.productTable.tableName,
         BUCKET_NAME: props.bucket.bucketName,
+        SETTINGS_TABLE_NAME: props.settingsTable.tableName,
+        PRODUCT_TABLE_NAME: props.productTable.tableName,
       },
       layers: props.layers,
       memorySize: 1600,
@@ -41,8 +41,8 @@ export default class Automator extends Construct {
     })
 
     // 👇 grant some permissions for the lambda role
-    props.cookieTable.grantReadWriteData(this.handler)
-    props.productTable.grantReadWriteData(this.handler)
     props.bucket.grantReadWrite(this.handler)
+    props.settingsTable.grantReadWriteData(this.handler)
+    props.productTable.grantReadWriteData(this.handler)
   }
 }
