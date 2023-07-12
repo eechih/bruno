@@ -1,4 +1,4 @@
-import { automatorSQSClient, productDataClient, settingsDataClient } from '.'
+import { automatorQueue, productTable, settingsTable } from '.'
 import { Product, ProductPublishState } from '../product/types'
 import { Settings } from '../settings/types'
 import { Buyplus1 } from './buyplus1'
@@ -16,7 +16,7 @@ export const asyncPublishProduct = async (
   console.log('asyncPublishProduct', params)
   const { productId } = params
   await getProduct(productId)
-  await automatorSQSClient.sendMessage({
+  await automatorQueue.sendMessage({
     body: JSON.stringify(params),
   })
   return updatePublishState(productId, ProductPublishState.PENDING)
@@ -45,7 +45,7 @@ export default async function (params: PublishProductParams): Promise<Product> {
 }
 
 const getProduct = async (productId: string): Promise<Product> => {
-  const product = await productDataClient.getItem<Product>({
+  const product = await productTable.getItem<Product>({
     key: { id: productId },
   })
   if (!product) throw new Error('Product not found.')
@@ -53,7 +53,7 @@ const getProduct = async (productId: string): Promise<Product> => {
 }
 
 const getSettings = async (owner: string): Promise<Settings> => {
-  const settings = await settingsDataClient.getItem<Settings>({
+  const settings = await settingsTable.getItem<Settings>({
     key: { owner },
   })
   if (!settings) throw new Error('Settings not found.')
@@ -64,7 +64,7 @@ const updateBP1ProductId = async (
   productId: string,
   bp1Id: string
 ): Promise<Product> => {
-  return productDataClient.updateItem<Product>({
+  return productTable.updateItem<Product>({
     key: { id: productId },
     attributeValues: {
       bp1ProductId: bp1Id,
@@ -77,7 +77,7 @@ const updateFbPostId = async (
   productId: string,
   fbPostId: string
 ): Promise<Product> => {
-  return productDataClient.updateItem<Product>({
+  return productTable.updateItem<Product>({
     key: { id: productId },
     attributeValues: {
       fbPostId: fbPostId,
@@ -90,7 +90,7 @@ const updatePublishState = async (
   productId: string,
   publishState: ProductPublishState
 ): Promise<Product> => {
-  return productDataClient.updateItem<Product>({
+  return productTable.updateItem<Product>({
     key: { id: productId },
     attributeValues: {
       publishState,

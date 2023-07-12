@@ -1,27 +1,27 @@
-import S3Client from '../../libs/S3Client'
-import DynamoDBDataClient from '../../libs/ddbDataClient'
+import DynamoDbClient from '../../libs/dynamodb/Client'
+import S3Client from '../../libs/s3/Client'
 import SQSClient from '../../libs/sqs/Client'
 import handleAppSyncResolverEvent, {
   isAppSyncResolverEvent,
 } from './handleAppSyncResolverEvent'
 import handleSQSEvent, { isSQSEvent } from './handleSQSEvent'
 
-export const s3Client = new S3Client({
+export const s3 = new S3Client({
   region: process.env.AWS_REGION!,
   bucketName: process.env.BUCKET_NAME!,
 })
 
-export const settingsDataClient = new DynamoDBDataClient({
+export const settingsTable = new DynamoDbClient({
   region: process.env.AWS_REGION!,
   tableName: process.env.SETTINGS_TABLE_NAME!,
 })
 
-export const productDataClient = new DynamoDBDataClient({
+export const productTable = new DynamoDbClient({
   region: process.env.AWS_REGION!,
   tableName: process.env.PRODUCT_TABLE_NAME!,
 })
 
-export const automatorSQSClient = new SQSClient({
+export const automatorQueue = new SQSClient({
   region: process.env.AWS_REGION!,
   queueUrl: process.env.AUTOMATOR_QUEUE_URL!,
 })

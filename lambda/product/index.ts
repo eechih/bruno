@@ -1,6 +1,6 @@
 import { AppSyncIdentityCognito, AppSyncResolverEvent } from 'aws-lambda'
 
-import DynamoDBDataClient from '../../libs/ddbDataClient'
+import DynamodbClient from '../../libs/dynamodb/Client'
 import { util } from '../../utils'
 import {
   CreateProductArgs,
@@ -12,9 +12,10 @@ import {
   UpdateProductArgs,
 } from './types'
 
-const region = process.env.AWS_REGION!
-const tableName = process.env.PRODUCT_TABLE_NAME!
-const dataClient = new DynamoDBDataClient({ region, tableName })
+const productTable = new DynamodbClient({
+  region: process.env.AWS_REGION!,
+  tableName: process.env.PRODUCT_TABLE_NAME!,
+})
 
 export const handler = async (
   event: AppSyncResolverEvent<
@@ -54,7 +55,7 @@ export async function listProducts(
   owner: string
 ): Promise<ProductConnection> {
   console.log('listProducts', args)
-  const connection = await dataClient.query<Product>({
+  const connection = await productTable.query<Product>({
     query: {
       expression: '#owner = :owner',
       expressionNames: { '#owner': 'owner' },
@@ -73,7 +74,7 @@ export async function getProduct(
   owner: string
 ): Promise<Product> {
   console.log('getProduct', args)
-  const product = await dataClient.getItem<Product>({
+  const product = await productTable.getItem<Product>({
     key: { id: args.id },
   })
   if (!product) throw new Error('Product not found')
@@ -86,7 +87,7 @@ export async function createProduct(
 ): Promise<Product> {
   console.log('createProduct', args)
   const { input } = args
-  const created = await dataClient.putItem<Product>({
+  const created = await productTable.putItem<Product>({
     key: { id: util.autoId() },
     attributeValues: {
       ...input,
@@ -104,7 +105,7 @@ export async function updateProduct(
 ): Promise<Product> {
   console.log('updateProduct', args)
   const { input } = args
-  const updated = await dataClient.updateItem<Product>({
+  const updated = await productTable.updateItem<Product>({
     key: { id: input.id },
     attributeValues: {
       ...input,
@@ -121,7 +122,7 @@ export async function deleteProduct(
 ): Promise<Product> {
   console.log('deleteProduct', args)
   const { input } = args
-  const deleted = await dataClient.deleteItem<Product>({
+  const deleted = await productTable.deleteItem<Product>({
     key: { id: input.id },
   })
   if (!deleted) throw new Error('Failed to delete product')

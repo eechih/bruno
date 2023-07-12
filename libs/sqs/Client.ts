@@ -17,7 +17,9 @@ export default class Client {
   constructor(config: ClientConfig) {
     const { region, queueUrl } = config
     if (!region || !queueUrl) {
-      throw new Error(`Invalid ClientConfig ${JSON.stringify(config, null, 2)}`)
+      throw new Error(
+        `Invalid SQSClientConfig ${JSON.stringify(config, null, 2)}`
+      )
     }
     this.queueUrl = queueUrl
     this.client = new SQSClient({ region })

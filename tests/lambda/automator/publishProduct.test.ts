@@ -8,7 +8,7 @@ import { Readable } from 'stream'
 import cookieJson1 from '../../../cookies/cookie.json'
 import cookieJson2 from '../../../cookies/cookie2.json'
 import publishProduct from '../../../lambda/automator/publishProduct'
-import S3ClientWrapper from '../../../libs/S3Client'
+import S3ClientWrapper from '../../../libs/s3/Client'
 import { mockOwner, mockProduct, mockSettings } from './mock-data'
 
 const ddbMock = mockClient(DynamoDBDocumentClient)

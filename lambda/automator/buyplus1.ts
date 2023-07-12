@@ -5,7 +5,7 @@ import { ClientRequest } from 'http'
 import moment from 'moment'
 import { isEmpty, isNil } from 'ramda'
 
-import { s3Client } from '.'
+import { s3 } from '.'
 import { BP1Cookie, FBCookie } from '../settings/types'
 import { Product } from './types'
 import { convertBP1Cookie, convertFBCookie, createAxiosInstance } from './util'
@@ -181,7 +181,7 @@ export class Buyplus1 {
   private updateProductImage = async (bp1Id: string, imageKey: string) => {
     console.log('updateProductImage', { bp1Id, imageKey })
     // get image url
-    const imageUrl = await s3Client.getPresignedUrl({ key: imageKey })
+    const imageUrl = await s3.getPresignedUrl({ key: imageKey })
     // download image
     console.log('Download image...', imageUrl)
     const response1 = await this.axios.get(imageUrl, {

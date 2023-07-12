@@ -1,8 +1,8 @@
 import { AppSyncIdentityCognito, AppSyncResolverEvent } from 'aws-lambda'
 import { isEmpty, isNil } from 'ramda'
 
-import DynamoDBDataClient from '../../libs/ddbDataClient'
-import S3Client from '../../libs/S3Client'
+import DynamoDBDataClient from '../../libs/dynamodb/Client'
+import S3Client from '../../libs/s3/Client'
 import {
   Cookie,
   CreateBP1ProductInput,

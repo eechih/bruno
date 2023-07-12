@@ -10,9 +10,9 @@ import {
 import { NativeAttributeValue } from '@aws-sdk/util-dynamodb'
 import { isEmpty, isNil } from 'ramda'
 
-import { util } from '../utils'
+import { util } from '../../utils'
 
-type DynamoDBDataClientConfig = {
+type ClientConfig = {
   region: string
   tableName: string
 }
@@ -51,16 +51,16 @@ export interface QueryParams {
   select?: string // default 'ALL_ATTRIBUTES'
 }
 
-export default class DynamoDBDataClient {
+export default class Client {
   private ddbClient: DynamoDBClient
   private ddbDocClient: DynamoDBDocumentClient
   private tableName: string
 
-  constructor(config: DynamoDBDataClientConfig) {
+  constructor(config: ClientConfig) {
     const { region, tableName } = config
     if (!tableName || !region) {
       throw new Error(
-        `Invalid DynamoDBConfig ${JSON.stringify(config, null, 2)}`
+        `Invalid DynamoDBClientConfig ${JSON.stringify(config, null, 2)}`
       )
     }
     this.tableName = tableName

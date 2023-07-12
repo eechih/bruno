@@ -5,16 +5,16 @@ import {
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
-type S3ClientConfig = {
+type ClientConfig = {
   region: string
   bucketName: string
 }
 
-export default class S3Client {
+export default class Client {
   private client: AWSS3Client
   private bucketName: string
 
-  constructor(config: S3ClientConfig) {
+  constructor(config: ClientConfig) {
     const { region, bucketName } = config
     if (!region || !bucketName) {
       throw new Error(
