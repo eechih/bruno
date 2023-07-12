@@ -8,7 +8,6 @@ import { Readable } from 'stream'
 import cookieJson1 from '../../../cookies/cookie.json'
 import cookieJson2 from '../../../cookies/cookie2.json'
 import publishProduct from '../../../lambda/automator/publishProduct'
-import { PublishProductInput } from '../../../lambda/automator/types'
 import S3ClientWrapper from '../../../libs/S3Client'
 import { mockOwner, mockProduct, mockSettings } from './mock-data'
 
@@ -49,8 +48,10 @@ test.skip('should publish product to BuyPlus1', async () => {
     Item: mockSettings,
   })
 
-  const input: PublishProductInput = { id: mockProduct.id }
-  const result = await publishProduct(mockOwner, input)
+  const result = await publishProduct({
+    owner: mockOwner,
+    productId: mockProduct.id,
+  })
   expect(result).toEqual(mockProduct)
   expect(ddbMock).toHaveReceivedCommandTimes(GetCommand, 2)
   expect(getPresignedUrlSpy).toHaveBeenCalled()

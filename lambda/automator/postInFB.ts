@@ -1,5 +1,3 @@
-export default async function (): Promise<null> {
+export default async function (): Promise<void> {
   console.log('postInFB')
-
-  return null
 }

@@ -4,7 +4,7 @@ type Mutation {
   createProduct(input: CreateProductInput!): Product
   updateProduct(input: UpdateProductInput!): Product
   deleteProduct(input: DeleteProductInput!): Product
-  publishProduct(input: PublishProductInput!): Product
+  asyncPublishProduct(input: PublishProductInput!): Product
 }
 
 type Query {
@@ -33,6 +33,7 @@ type Product @aws_api_key @aws_cognito_user_pools {
   fbPostedAt: AWSDateTime
   bp1ProductId: String
   bp1CreatedAt: AWSDateTime
+  publishState: String
   createdAt: AWSDateTime
   updatedAt: AWSDateTime
   owner: String!

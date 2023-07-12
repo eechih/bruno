@@ -6,7 +6,6 @@ import moment from 'moment'
 import { isEmpty, isNil } from 'ramda'
 
 import { s3Client } from '.'
-import { util } from '../../utils'
 import { BP1Cookie, FBCookie } from '../settings/types'
 import { Product } from './types'
 import { convertBP1Cookie, convertFBCookie, createAxiosInstance } from './util'
@@ -28,15 +27,7 @@ export class Buyplus1 {
     })
   }
 
-  publish = async (product: Product): Promise<Product> => {
-    await this.refreshToken()
-    const product2 = await this.assignNewBP1ProductId(product)
-    const product3 = await this.updateBP1Product(product2)
-    const product4 = await this.postInFBGroup(product3)
-    return product4
-  }
-
-  private refreshToken = async () => {
+  refreshToken = async () => {
     console.log('refreshToken...')
     const response = await this.axios.get('/')
     const request: ClientRequest = response.request
@@ -47,21 +38,19 @@ export class Buyplus1 {
     this.token = token
   }
 
-  private assignNewBP1ProductId = async (
-    product: Product
-  ): Promise<Product> => {
+  assignNewId = async (): Promise<string> => {
     console.log('Start assigning new Buy+1 product ID...')
     const createProductResponse = await this.axios.get(
       `?route=catalog/product/add&token=${this.token}`
     )
     const $ = cheerio.load(createProductResponse.data)
-    const productId = $('input[type="hidden"][name="product_id"]').val()
+    const bp1Id = $('input[type="hidden"][name="product_id"]').val()
     const microtime = $('input[type="hidden"][name="microtime"]').val()
     const dateModified = $('input[type="hidden"][name="date_modified"]').val()
     const temporaryName = moment().unix()
 
     const formData = new FormData()
-    formData.append('product_id', productId)
+    formData.append('product_id', bp1Id)
     formData.append('microtime', microtime)
     formData.append('date_modified', dateModified)
     formData.append('product_description[1][name]', temporaryName)
@@ -87,39 +76,46 @@ export class Buyplus1 {
     }
 
     console.log('Successfully assigned new Buy+1 product ID')
-    return {
-      ...product,
-      bp1ProductId: newId,
-      bp1CreatedAt: util.time.nowISO8601(),
-    }
+    return newId
   }
 
-  private updateBP1Product = async (product: Product): Promise<Product> => {
-    console.log('Start updating product in Buy+1.', product)
+  updateProduct = async (
+    bp1Id: string,
+    input: Pick<
+      Product,
+      | 'name'
+      | 'price'
+      | 'cost'
+      | 'fbMessage'
+      | 'offShelfAt'
+      | 'provider'
+      | 'options'
+      | 'images'
+    >
+  ) => {
+    console.log('Start updating product in Buy+1.', bp1Id, input)
     const {
-      bp1ProductId: productId,
       name,
       price,
       cost = 0,
       fbMessage = '',
       offShelfAt,
       provider = '',
-    } = product
+      options,
+      images,
+    } = input
     try {
       const res = await this.axios.get(
-        `?route=catalog/product/edit&product_id=${productId}&token=${this.token}`
+        `?route=catalog/product/edit&product_id=${bp1Id}&token=${this.token}`
       )
       const $ = cheerio.load(res.data)
       const microtime = $('input[type="hidden"][name="microtime"]').val()
       const dateModified = $('input[type="hidden"][name="date_modified"]').val()
 
-      const replacedName = name.replace('{{product-id}}', `S1-${productId}`)
-      const description = fbMessage?.replace(
-        '{{product-id}}',
-        `S1-${productId}`
-      )
+      const replacedName = name.replace('{{product-id}}', `S1-${bp1Id}`)
+      const description = fbMessage?.replace('{{product-id}}', `S1-${bp1Id}`)
       const form = new FormData()
-      form.append('product_id', productId)
+      form.append('product_id', bp1Id)
       form.append('microtime', microtime ?? '')
       form.append('date_modified', dateModified ?? '')
       form.append('product_description[1][name]', replacedName)
@@ -149,28 +145,20 @@ export class Buyplus1 {
 
       if (!saveProductResp.data.success) throw new Error(saveProductResp.data)
 
-      if (product.options) await this.saveProductOption(product)
-
-      if (product.bp1ProductId && product.images)
-        await this.updateProductImage({
-          productId: product.bp1ProductId,
-          imageKey: product.images[0],
-        })
-
+      if (options) await this.saveProductOption(bp1Id, options)
+      if (images) await this.updateProductImage(bp1Id, images[0])
       console.log('Successfully updated a product in Buy+1.')
-      return { ...product, updatedAt: util.time.nowISO8601() }
     } catch (err) {
       console.error('failed to update product.', err)
       throw new Error('Failed to update product.')
     }
   }
 
-  private postInFBGroup = async (product: Product): Promise<Product> => {
-    console.log('Start posting to FB Group.', { product })
-    const { bp1ProductId: productId, fbGroupId } = product
+  postInFBGroup = async (bp1Id: string, fbGroupId: string): Promise<string> => {
+    console.log('Start posting to FB Group.', { bp1Id, fbGroupId })
 
     const res = await this.axios.get(
-      `?route=catalog/product/postInFBGroup&token=${this.token}&product_id=${productId}&fb_group_id=${fbGroupId}`
+      `?route=catalog/product/postInFBGroup&token=${this.token}&product_id=${bp1Id}&fb_group_id=${fbGroupId}`
     )
 
     const status = res.data?.[0]?.status ?? ''
@@ -179,24 +167,23 @@ export class Buyplus1 {
     const url = mo && mo[2]
 
     if (isNil(url) || isEmpty(url)) {
-      throw new Error(`Failed to post to FB Group. Reason: ${res.data}`)
+      console.log('Failed to post to FB Group', res.data)
+      throw new Error(
+        `Failed to post to FB Group. Reason: ${JSON.stringify(res.data)}`
+      )
     }
 
-    const fbPostId = url.replace('http://www.facebook.com/', '')
+    const fbPostId = url.replace('https://www.facebook.com/', '')
     console.log('Successfully post to FB Group.', fbPostId)
-    return { ...product, fbPostId, fbPostedAt: util.time.nowISO8601() }
+    return fbPostId
   }
 
-  private updateProductImage = async (props: {
-    productId: string
-    imageKey: string
-  }) => {
-    console.log('updateProductImage', props)
-    const { productId, imageKey } = props
+  private updateProductImage = async (bp1Id: string, imageKey: string) => {
+    console.log('updateProductImage', { bp1Id, imageKey })
     // get image url
     const imageUrl = await s3Client.getPresignedUrl({ key: imageKey })
     // download image
-    console.log('Download image...')
+    console.log('Download image...', imageUrl)
     const response1 = await this.axios.get(imageUrl, {
       decompress: false,
       responseType: 'arraybuffer',
@@ -206,7 +193,7 @@ export class Buyplus1 {
 
     // get image dir
     const imageDir = await this.obtaineImageDir({
-      dirName: productId,
+      dirName: bp1Id,
     })
     console.log('ImageDir', imageDir)
 
@@ -223,13 +210,14 @@ export class Buyplus1 {
         headers: { 'Content-Type': 'multipart/form-data' },
       }
     )
+    console.log('Image upload response:', response2)
     const image = response2.data?.added?.[0]
     console.log('Image upload successful.', image)
 
     // update the image of product
     await this.quickUpdate({
-      id: `image-${productId}`,
-      new: `catalog/upload/${productId}/${image.name}`,
+      id: `image-${bp1Id}`,
+      new: `catalog/upload/${bp1Id}/${image.name}`,
     })
   }
 
@@ -280,11 +268,10 @@ export class Buyplus1 {
     else console.log('Update failed:', res?.data)
   }
 
-  private saveProductOption = async (product: Product) => {
-    console.log('saveOptions', product.options)
-    const { bp1ProductId: productId, options = [] } = product
+  private saveProductOption = async (bp1Id: string, options: string[][]) => {
+    console.log('saveOptions', bp1Id, options)
     const form = new FormData()
-    form.append('p_id', productId)
+    form.append('p_id', bp1Id)
     form.append('microtime', '')
     for (let i = 0; i < options.length; i++) {
       form.append(`product_option[${i}][name]`, '手動輸入')
@@ -301,7 +288,7 @@ export class Buyplus1 {
       const form = new FormData()
       form.append('batch_edit', '1')
       form.append('selected', '')
-      form.append('product_id', productId)
+      form.append('product_id', bp1Id)
       form.append('microtime', '')
       form.append('table_index', i)
       form.append('options_count', options.length)

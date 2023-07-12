@@ -123,7 +123,7 @@ export default class AppSync extends Construct {
     createResolver('Mutation', 'createProduct', productLambdaSource)
     createResolver('Mutation', 'updateProduct', productLambdaSource)
     createResolver('Mutation', 'deleteProduct', productLambdaSource)
-    createResolver('Mutation', 'publishProduct', automatorLambdaSource)
+    createResolver('Mutation', 'asyncPublishProduct', automatorLambdaSource)
 
     createResolver('Query', 'getSettings', settingsLambdaSource)
     createResolver('Query', 'getProduct', productLambdaSource)

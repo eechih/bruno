@@ -1,5 +1,12 @@
 export type ISO8601String = string
 
+export enum ProductPublishState {
+  PENDING = 'pending',
+  PPRCESSING = 'processing',
+  PPRCESSED = 'processed',
+  FAILED = 'failed',
+}
+
 export type ProductConnection = {
   items: Pick<Product, 'id'>[]
   nextToken?: string
@@ -21,6 +28,7 @@ export type Product = {
   fbPostedAt?: ISO8601String // FB貼文時間
   bp1ProductId?: string // Buy+1 ID
   bp1CreatedAt?: ISO8601String // Buy+1產品編號
+  publishState?: ProductPublishState // 發佈的處理狀態
   createdAt?: ISO8601String
   updatedAt?: ISO8601String
   owner: string

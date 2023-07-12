@@ -1,11 +1,10 @@
-import { AppSyncIdentityCognito, AppSyncResolverEvent } from 'aws-lambda'
-
 import S3Client from '../../libs/S3Client'
 import DynamoDBDataClient from '../../libs/ddbDataClient'
-import { Product } from '../product/types'
-import postInFB from './postInFB'
-import publishProduct from './publishProduct'
-import { PublishProductArgs } from './types'
+import SQSClient from '../../libs/sqs/Client'
+import handleAppSyncResolverEvent, {
+  isAppSyncResolverEvent,
+} from './handleAppSyncResolverEvent'
+import handleSQSEvent, { isSQSEvent } from './handleSQSEvent'
 
 export const s3Client = new S3Client({
   region: process.env.AWS_REGION!,
@@ -22,24 +21,18 @@ export const productDataClient = new DynamoDBDataClient({
   tableName: process.env.PRODUCT_TABLE_NAME!,
 })
 
-export const handler = async (
-  event: AppSyncResolverEvent<PublishProductArgs>
-): Promise<Product | null> => {
+export const automatorSQSClient = new SQSClient({
+  region: process.env.AWS_REGION!,
+  queueUrl: process.env.AUTOMATOR_QUEUE_URL!,
+})
+
+export const handler = async (event: any): Promise<any> => {
   console.log('Received event {}', JSON.stringify(event, null, 3))
-
-  const identity = event.identity as AppSyncIdentityCognito
-  if (!identity) {
-    throw new Error('Forbidden, missing identity information')
-  }
-  const { sub: owner } = identity
-  const { fieldName } = event.info
-
-  if (fieldName === 'publishProduct') {
-    const { input } = event.arguments as PublishProductArgs
-    return publishProduct(owner, input)
-  } else if (fieldName === 'postInFB') {
-    return postInFB()
+  if (isSQSEvent(event)) {
+    return handleSQSEvent(event)
+  } else if (isAppSyncResolverEvent(event)) {
+    return handleAppSyncResolverEvent(event)
   } else {
-    throw new Error('Unknown field, unable to resolve' + fieldName)
+    throw new Error('Unknown event:' + event)
   }
 }
