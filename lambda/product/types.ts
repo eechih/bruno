@@ -67,7 +67,7 @@ export type UpdateProductInput = Pick<Product, 'id'> &
 
 export type DeleteProductInput = Pick<Product, 'id'>
 
-export type PublishProductInput = Pick<Product, 'id'>
+export type AsyncPublishProductInput = Pick<Product, 'id'>
 
 export type ListProductsArgs = {
   limit?: number
@@ -88,6 +88,6 @@ export type DeleteProductArgs = {
   input: DeleteProductInput
 }
 
-export type PublishProductArgs = {
-  input: PublishProductInput
+export type AsyncPublishProductArgs = {
+  input: AsyncPublishProductInput
 }

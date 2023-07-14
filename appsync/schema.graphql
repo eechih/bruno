@@ -4,7 +4,7 @@ type Mutation {
   createProduct(input: CreateProductInput!): Product
   updateProduct(input: UpdateProductInput!): Product
   deleteProduct(input: DeleteProductInput!): Product
-  asyncPublishProduct(input: PublishProductInput!): Product
+  asyncPublishProduct(input: AsyncPublishProductInput!): Product
 }
 
 type Query {
@@ -76,7 +76,7 @@ input DeleteProductInput {
   id: ID!
 }
 
-input PublishProductInput {
+input AsyncPublishProductInput {
   id: ID!
 }
 

@@ -3,7 +3,7 @@ import { AppSyncIdentityCognito, AppSyncResolverEvent } from 'aws-lambda'
 import { Product } from '../product/types'
 import postInFB from './postInFB'
 import { asyncPublishProduct, PublishProductParams } from './publishProduct'
-import { PublishProductArgs } from './types'
+import { AsyncPublishProductArgs } from './types'
 
 export const isAppSyncResolverEvent = (event: any): boolean => {
   return (
@@ -17,7 +17,7 @@ export const isAppSyncResolverEvent = (event: any): boolean => {
 }
 
 export default async function (
-  event: AppSyncResolverEvent<PublishProductArgs>
+  event: AppSyncResolverEvent<AsyncPublishProductArgs>
 ): Promise<Product | string | void> {
   const identity = event.identity as AppSyncIdentityCognito
   if (!identity) {
@@ -27,7 +27,7 @@ export default async function (
   const { fieldName } = event.info
 
   if (fieldName === 'asyncPublishProduct') {
-    const { input } = event.arguments as PublishProductArgs
+    const { input } = event.arguments as AsyncPublishProductArgs
     const params: PublishProductParams = { productId: input.id, owner }
     return await asyncPublishProduct(params)
   } else if (fieldName === 'postInFB') {
